@@ -1,0 +1,47 @@
+<!-- This page is illustrative and contains ideas about HTML formatting -->
+<!DOCTYPE HTML>
+<html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layouts/base}" lang="en">
+
+<head>
+    <title>Login</title>
+</head>
+
+<!-- <body> -->
+<th:block layout:fragment="body" th:remove="tag">
+
+    <div class="container py-4">
+        <header class="pb-3 mb-4 border-bottom border-primary text-dark">
+            <span class="fs-4">Login Page</span>
+        </header>
+    </div>
+
+    <div class="container py-4 text-light bg-success">
+
+        <div class="container bg-secondary py-4">
+            <div class="p-5 mb-4 bg-light text-dark rounded-3">
+                <form name="f" th:action="@{/login}" method="POST">
+                    <table>
+                        <tr th:if="${param.error}" class="alert alert-error">
+                            Invalid username and password.
+                        </tr>
+                        <tr th:if="${param.logout}" class="alert alert-success">
+                            You have been logged out.
+                        </tr>
+                        <!-- 'email' is mapped to 'username' for Spring Security -->
+                        <tr><th><label for="username">Email</label></th></tr>
+                        <tr><td><input type="email" id='username' name="username" size="20" required></td></tr>
+                        <tr><th><label for="password">Password</label></th></tr>
+                        <tr><td><input type="password" id="password" name="password" size="20" required></td></tr>
+                        <tr><th><input type="submit" value="Submit"></th></tr>
+                        <tr><td><a th:href="@{/mvc/person/create}">Sign Up</a></td></tr>
+
+                    </table>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+

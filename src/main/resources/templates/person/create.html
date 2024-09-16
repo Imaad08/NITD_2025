@@ -1,0 +1,71 @@
+<!-- This page is illustrative and contains ideas about HTML formatting -->
+<!DOCTYPE HTML>
+<!-- Signals to the Layout Dialect which layout should be used to decorate this View -->
+<html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layouts/base}" lang="en">
+
+<head>
+    <title>Person Form</title>
+</div>
+
+<!-- <body> -->
+<body>
+<th:block layout:fragment="body" th:remove="tag">    <!-- Page specific body additions -->
+    <div class="container">
+
+        <div class="row justify-content-md-center">
+            <h2>Welcome, Enter the new Persons details</h2>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col8">
+                <div class="jumbotron">
+                    <h3>Create Person</h3>
+                    <!-- ThymeLeaf allows person abject of the Class Person to be acted upon by the form
+                         This is known as a “bean-backed form” or "form-backing bean".
+                            th:object - the backend form object (bean object)
+                         There are fields in the Person bean
+                            th:field="*{name}"
+                            th:field="*{age}"
+                            th:field="*{dob}"
+                         Each field has supporting line to show errors in validation
+                            th:errors - form input errors added when validation errors occur
+                         Reference for CRUD
+                            https://www.baeldung.com/spring-boot-crud-thymeleaf
+                         Get started with dialects in 5 minutes
+                            https://www.thymeleaf.org/doc/articles/standarddialect5minutes.html
+                         Reference Bootstrap Form
+                            https://getbootstrap.com/docs/4.0/components/forms/#readonly-plain-text
+                     -->
+                    <form class="form-inline" action="#" th:action="@{/mvc/person/create}" th:object="${person}" method="POST">
+                        <div class="form-group mb-2 mr-sm-2">
+                            <label for="email">Email:</label>
+                            <input type="email" th:field="*{email}" id="email">
+                            <small th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email Error</small>
+                        </div>
+                        <div class="form-group mb-2 mr-sm-2">
+                            <label for="password">Password:</label>
+                            <input type="password" th:field="*{password}" id="password">
+                            <small th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password Error</small>
+                        </div>
+                        <div class="input-group mb-2 mr-sm-2">
+                            <label for="name">Name:</label>
+                            <input type="text" th:field="*{name}" id="name">
+                            <small th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name Error</small>
+                        </div>
+                        <div class="input-group mb-2 mr-sm-2">
+                            <label for="dob">Birth Date:</label>
+                            <input type="date" th:field="*{dob}" id="dob">
+                            <small th:if="${#fields.hasErrors('dob')}" th:errors="*{dob}">Birth Date Error</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</th:block>
+</body>
+
+</html>

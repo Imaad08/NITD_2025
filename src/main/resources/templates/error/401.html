@@ -1,0 +1,18 @@
+<!DOCTYPE HTML>
+<html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layouts/base}" lang="en">
+
+<head>
+    <title>401 error</title>
+</head>
+
+<body>
+<th:block layout:fragment="body" th:remove="tag">
+    <script>
+        // Send 401 directly to /login
+        window.location.replace("/login");
+    </script>
+</th:block>>
+</body>
+
+</html>

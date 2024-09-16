@@ -1,0 +1,60 @@
+<!-- This page is illustrative and contains ideas about HTML formatting -->
+<!DOCTYPE HTML>
+<!-- Signals to the Layout Dialect which layout should be used to decorate this View -->
+<html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layouts/base}" lang="en">
+
+<head>    <!-- Page specific head additions -->
+    <title>Person List</title>
+</head>
+
+<!-- <body> -->
+<body>
+<th:block layout:fragment="body" th:remove="tag">
+    <div class="container py-4 bg-primary">
+        <!-- Page specific body additions -->
+        <header class="pb-3 mb-4 border-bottom">
+            <a href="#" class="d-flex align-items-center text-light text-decoration-none">
+                <span class="fs-4">Database SQL Person</span>
+            </a>
+        </header>
+
+        <div class="container py-4 text-light bg-success">
+
+            <h2>Person Viewer</h2>
+            <a th:href="@{/mvc/person/create}">Create Person</a>
+            <div class="row align-items-md-stretch">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User ID</th>
+                        <th>Person</th>
+                        <th>Age</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="person : ${list}">
+                        <td th:text="${person.id}">Person ID</td>
+                        <td th:text="${person.email}">Birth Date</td>
+                        <td th:text="${person.name}">Name</td>
+                        <td th:if="${person.getAge() != -1}" th:text="${person.getAge()}">Age</td>
+                        <td th:unless="${person.getAge() != -1}" th:text="Unknown">Unknown Age</td>
+                        <td>
+                            <!--- <a th:href="@{/mvc/notes/{id}(id = ${person.id})}">Notes</a> -->
+                            <a th:href="@{/mvc/person/update/{id}(id = ${person.id})}">Update</a>
+                            <a th:href="@{/mvc/person/delete/{id}(id = ${person.id})}">Delete</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</th:block>
+</body>
+
+</html>

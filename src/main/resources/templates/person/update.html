@@ -1,0 +1,89 @@
+<!-- This page is illustrative and contains ideas about HTML formatting -->
+<!DOCTYPE HTML>
+<!-- Signals to the Layout Dialect which layout should be used to decorate this View -->
+<html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layouts/base}" lang="en">
+
+<head>
+    <title>Person Update</title>
+</head>
+
+<body>
+<th:block layout:fragment="body" th:remove="tag">
+    <!-- Page specific body additions -->
+    <div class="container">
+
+        <div class="row justify-content-md-center">
+            <h2>Welcome, Update The Persons Details</h2>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col8">
+                <div class="jumbotron">
+                    <!-- ThymeLeaf allows person abject of the Class Person to be acted upon by the form
+                         This is known as a “bean-backed form” or "form-backing bean".
+                            th:object - the backend form object (bean object)
+                         There are two fields in the Person bean,
+                            th:field="*{name}"
+                            th:field="*{age}".
+                         Each field has supporting line for to show errors in validation
+                            th:errors - form input errors added when validation errors occur
+                         Reference for CRUD
+                            https://www.baeldung.com/spring-boot-crud-thymeleaf
+                         Get started with dialects in 5 minutes
+                            https://www.thymeleaf.org/doc/articles/standarddialect5minutes.html
+                         Reference Bootstrap Form
+                            https://getbootstrap.com/docs/4.0/components/forms/#readonly-plain-text
+                     -->
+                    <!--Read Only Section -->
+                    <h3 th:text="'ID: ' + ${person.id}"></h3>
+                    <table>
+                        <tr th:if="${person.roles.empty}">
+                            <td colspan="2"> No Roles </td>
+                        </tr>
+                        <tr th:each="role : ${person.roles}">
+                            <td><span th:text="${role.name}"> Name </span></td>
+                        </tr>
+                    </table>
+                    <!--Update Form -->
+                    <form class="form-inline" action="#" th:action="@{/mvc/person/update}" th:object="${person}" method="POST">
+                        <!-- Hidden Section, stuff we need to reference to preserve on Update -->
+                        <div class="form-group mb-2 mr-sm-2">
+                            <label for="id" hidden></label>
+                            <input type="text" th:field="*{id}" id="id" hidden class="form-control-plaintext" >
+                            <label for="roles" hidden></label>
+                            <input type="text" th:field="*{roles}" id="roles" hidden class="form-control-plaintext" >
+                        </div>
+                        <!--Update Section -->
+                        <div class="form-group mb-2 mr-sm-2">
+                            <label for="email">Email:</label>
+                            <input type="email" th:field="*{email}" id="email" >
+                            <small th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email Error</small>
+                        </div>
+                        <div sec:authorize="hasRole('ADMIN')" class="form-group mb-2 mr-sm-2">
+                            <label for="password">Password:</label>
+                            <input type="password" th:field="*{password}" id="password">
+                            <small th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password Error</small>
+                        </div>
+                        <div class="form-group mb-2 mr-sm-2">
+                            <label for="name">Name:</label>
+                            <input type="text" th:field="*{name}" id="name">
+                            <small th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name Error</small>
+                        </div>
+                        <div class="form-group mb-2 mr-sm-2">
+                            <label for="dob">Birth Date:</label>
+                            <input type="date" th:field="*{dob}" id="dob">
+                            <small th:if="${#fields.hasErrors('dob')}" th:errors="*{dob}">Birth Date Error</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+</body>
+
+
+</html>
