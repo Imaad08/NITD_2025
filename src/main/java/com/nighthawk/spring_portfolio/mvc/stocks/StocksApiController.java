@@ -8,57 +8,58 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-@RestController // annotation to simplify the creation of RESTful web services
-@RequestMapping("/api/stocks")  // all requests in file begin with this URI
+@RestController
+@RequestMapping("/api/stocks")
 public class StocksApiController {
 
-    // Autowired enables Control to connect URI request and POJO Object to easily for Database CRUD operations
     @Autowired
     private StocksJpaRepository repository;
 
-    /* GET List of Stocks
-     * @GetMapping annotation is used for mapping HTTP GET requests onto specific handler methods.
-     */
+    // Get all stocks
     @GetMapping("/")
     public ResponseEntity<List<Stocks>> getStocks() {
-        // ResponseEntity returns List of Stocks provide by JPA findAll()
-        return new ResponseEntity<>( repository.findAll(), HttpStatus.OK);
+        return new ResponseEntity<>(repository.findAll(), HttpStatus.OK);
     }
 
-    /* Update Like
-     * @PutMapping annotation is used for mapping HTTP PUT requests onto specific handler methods.
-     * @PathVariable annotation extracts the templated part {id}, from the URI
-     */
-    @PostMapping("/like/{id}")
-    public ResponseEntity<Stocks> setLike(@PathVariable long id) {
-        /* 
-        * Optional (below) is a container object which helps determine if a result is present. 
-        * If a value is present, isPresent() will return true
-        * get() will return the value.
-        */
+    // Buy stock
+    @PostMapping("/buy/{id}/{quantity}")
+    public ResponseEntity<Stocks> buyStock(@PathVariable long id, @PathVariable int quantity) {
         Optional<Stocks> optional = repository.findById(id);
-        if (optional.isPresent()) {  // Good ID
-            Stocks stocks = optional.get();  // value from findByID
-            stocks.setHaha(stocks.getHaha()+1); // increment value
-            repository.save(stocks);  // save entity
-            return new ResponseEntity<>(stocks, HttpStatus.OK);  // OK HTTP response: status code, headers, and body
+        if (optional.isPresent()) {
+            Stocks stock = optional.get();
+            stock.setOwnedQuantity(stock.getOwnedQuantity() + quantity); // Increase owned quantity
+            repository.save(stock);
+            return new ResponseEntity<>(stock, HttpStatus.OK);
         }
-        // Bad ID
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);  // Failed HTTP response: status code, headers, and body
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    /* Update Jeer
-     */
-    @PostMapping("/jeer/{id}")
-    public ResponseEntity<Stocks> setJeer(@PathVariable long id) {
+    // Sell stock
+    @PostMapping("/sell/{id}/{quantity}")
+    public ResponseEntity<Stocks> sellStock(@PathVariable long id, @PathVariable int quantity) {
         Optional<Stocks> optional = repository.findById(id);
-        if (optional.isPresent()) {  // Good ID
-            Stocks stocks = optional.get();
-            stocks.setBoohoo(stocks.getBoohoo()+1);
-            repository.save(stocks);
-            return new ResponseEntity<>(stocks, HttpStatus.OK);
+        if (optional.isPresent()) {
+            Stocks stock = optional.get();
+            if (stock.getOwnedQuantity() >= quantity) {
+                stock.setOwnedQuantity(stock.getOwnedQuantity() - quantity); // Decrease owned quantity
+                repository.save(stock);
+                return new ResponseEntity<>(stock, HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Not enough stock to sell
         }
-        // Bad ID
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    // Update stock price
+    @PostMapping("/updatePrice/{id}/{price}")
+    public ResponseEntity<Stocks> updateStockPrice(@PathVariable long id, @PathVariable double price) {
+        Optional<Stocks> optional = repository.findById(id);
+        if (optional.isPresent()) {
+            Stocks stock = optional.get();
+            stock.setCurrentPrice(price); // Update the stock's price
+            repository.save(stock);
+            return new ResponseEntity<>(stock, HttpStatus.OK);
+        }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }
