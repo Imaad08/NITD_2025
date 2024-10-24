@@ -10,12 +10,14 @@ public class MinesBoard {
 
     public MinesBoard(String stakes) {
         Random rng = new Random();
-        mines = switch(stakes) {
+        mines = switch (stakes) {
             case "low" -> rng.nextInt(4, 7);
             case "medium" -> rng.nextInt(6, 9);
             case "high" -> rng.nextInt(8, 11);
             default -> -1;
         };
+
+        placeMines();
     }
 
     private void placeMines() {
@@ -25,7 +27,7 @@ public class MinesBoard {
         Random rng = new Random();
 
         for (int i = 0; i < mines; i++) {
-            while (true){
+            while (true) {
                 xCoord = rng.nextInt(0, BOARD_SIZE);
                 yCoord = rng.nextInt(0, BOARD_SIZE);
 
@@ -37,7 +39,7 @@ public class MinesBoard {
         }
     }
 
-    private boolean checkMine(int xCoord, int yCoord) {
+    public boolean checkMine(int xCoord, int yCoord) {
         return board[xCoord][yCoord] == 1;
     }
 
@@ -51,7 +53,7 @@ public class MinesBoard {
     }
 
     // unit tester
-    public static void main (String[] args) {
+    public static void main(String[] args) {
         MinesBoard board = new MinesBoard("high");
         board.placeMines();
         board.printBoard();
