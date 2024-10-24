@@ -13,53 +13,91 @@ import java.util.Optional;
 public class StocksApiController {
 
     @Autowired
-    private StocksJpaRepository repository;
+    private StocksJpaRepository stockRepository;
 
-    // Get all stocks
-    @GetMapping("/")
-    public ResponseEntity<List<Stocks>> getStocks() {
-        return new ResponseEntity<>(repository.findAll(), HttpStatus.OK);
+    @Autowired
+    private UserJpaRepository userRepository;
+
+    @Autowired
+    private UserStockJpaRepository userStockRepository;
+
+    // Get all available stocks
+    @GetMapping("/all")
+    public ResponseEntity<List<Stocks>> getAllStocks() {
+        return new ResponseEntity<>(stockRepository.findAll(), HttpStatus.OK);
     }
 
     // Buy stock
-    @PostMapping("/buy/{id}/{quantity}")
-    public ResponseEntity<Stocks> buyStock(@PathVariable long id, @PathVariable int quantity) {
-        Optional<Stocks> optional = repository.findById(id);
-        if (optional.isPresent()) {
-            Stocks stock = optional.get();
-            stock.setOwnedQuantity(stock.getOwnedQuantity() + quantity); // Increase owned quantity
-            repository.save(stock);
-            return new ResponseEntity<>(stock, HttpStatus.OK);
+    @PostMapping("/buy/{userId}/{stockId}/{quantity}")
+    public ResponseEntity<?> buyStock(@PathVariable Long userId, @PathVariable Long stockId, @PathVariable int quantity) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<Stocks> stockOpt = stockRepository.findById(stockId);
+        
+        if (userOpt.isPresent() && stockOpt.isPresent()) {
+            User user = userOpt.get();
+            Stocks stock = stockOpt.get();
+            
+            double totalCost = stock.getCurrentPrice() * quantity;
+            if (user.getBalance() >= totalCost) {
+                user.setBalance(user.getBalance() - totalCost); // Deduct cost from user's balance
+
+                // Check if the user already owns this stock
+                UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
+                        .orElse(new UserStock(null, user, stock, 0, stock.getCurrentPrice()));
+
+                userStock.setQuantity(userStock.getQuantity() + quantity); // Add to owned quantity
+                userStockRepository.save(userStock);
+                userRepository.save(user);
+
+                return new ResponseEntity<>(user, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Not enough balance to complete purchase", HttpStatus.BAD_REQUEST);
+            }
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     // Sell stock
-    @PostMapping("/sell/{id}/{quantity}")
-    public ResponseEntity<Stocks> sellStock(@PathVariable long id, @PathVariable int quantity) {
-        Optional<Stocks> optional = repository.findById(id);
-        if (optional.isPresent()) {
-            Stocks stock = optional.get();
-            if (stock.getOwnedQuantity() >= quantity) {
-                stock.setOwnedQuantity(stock.getOwnedQuantity() - quantity); // Decrease owned quantity
-                repository.save(stock);
-                return new ResponseEntity<>(stock, HttpStatus.OK);
+    @PostMapping("/sell/{userId}/{stockId}/{quantity}")
+    public ResponseEntity<?> sellStock(@PathVariable Long userId, @PathVariable Long stockId, @PathVariable int quantity) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<Stocks> stockOpt = stockRepository.findById(stockId);
+
+        if (userOpt.isPresent() && stockOpt.isPresent()) {
+            User user = userOpt.get();
+            Stocks stock = stockOpt.get();
+
+            Optional<UserStock> userStockOpt = userStockRepository.findByUserAndStock(user, stock);
+            if (userStockOpt.isPresent() && userStockOpt.get().getQuantity() >= quantity) {
+                UserStock userStock = userStockOpt.get();
+                userStock.setQuantity(userStock.getQuantity() - quantity);
+
+                if (userStock.getQuantity() == 0) {
+                    userStockRepository.delete(userStock); // If no stock left, remove the entry
+                } else {
+                    userStockRepository.save(userStock); // Save updated stock quantity
+                }
+
+                double totalValue = stock.getCurrentPrice() * quantity;
+                user.setBalance(user.getBalance() + totalValue); // Add sale value to user's balance
+                userRepository.save(user);
+
+                return new ResponseEntity<>(user, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Not enough stock to sell", HttpStatus.BAD_REQUEST);
             }
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Not enough stock to sell
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    // Update stock price
-    @PostMapping("/updatePrice/{id}/{price}")
-    public ResponseEntity<Stocks> updateStockPrice(@PathVariable long id, @PathVariable double price) {
-        Optional<Stocks> optional = repository.findById(id);
-        if (optional.isPresent()) {
-            Stocks stock = optional.get();
-            stock.setCurrentPrice(price); // Update the stock's price
-            repository.save(stock);
-            return new ResponseEntity<>(stock, HttpStatus.OK);
+    // Simulate price fluctuation for all stocks
+    @PostMapping("/simulate")
+    public ResponseEntity<?> simulatePriceFluctuation() {
+        List<Stocks> stocks = stockRepository.findAll();
+        for (Stocks stock : stocks) {
+            stock.fluctuatePrice(); // Simulate price change
+            stockRepository.save(stock); // Save updated price
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(stocks, HttpStatus.OK);
     }
 }

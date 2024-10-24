@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import java.util.Random;
 
 @Data
 @NoArgsConstructor
@@ -18,18 +19,12 @@ public class Stocks {
     @Column(unique=true)
     private String stockSymbol; // e.g., AAPL, TSLA
 
-    private double currentPrice; // Current stock price
-    private int ownedQuantity;   // Number of stocks owned by the user
+    private double currentPrice; // Current price of the stock
 
-    @Column(name = "buy_price")
-    private double buyPrice;     // Price at which the stock was bought
-
-    // Initialize some sample stocks for testing
-    public static Stocks[] init() {
-        return new Stocks[] {
-            new Stocks(null, "AAPL", 175.0, 10, 160.0),
-            new Stocks(null, "TSLA", 800.0, 5, 700.0),
-            new Stocks(null, "GOOGL", 2800.0, 2, 2600.0),
-        };
+    // Simulate price changes dynamically
+    public void fluctuatePrice() {
+        Random random = new Random();
+        double change = (random.nextDouble() * 10) - 5; // Prices fluctuate randomly between -5 to +5
+        this.currentPrice = Math.max(0, this.currentPrice + change); // Price cannot be negative
     }
 }
