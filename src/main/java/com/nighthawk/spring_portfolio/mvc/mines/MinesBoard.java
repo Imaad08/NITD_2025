@@ -25,9 +25,20 @@ public class MinesBoard {
         Random rng = new Random();
 
         for (int i = 0; i < mines; i++) {
-            xCoord = rng.nextInt(0, BOARD_SIZE);
-            yCoord = rng.nextInt(0, BOARD_SIZE);
+            while (true){
+                xCoord = rng.nextInt(0, BOARD_SIZE);
+                yCoord = rng.nextInt(0, BOARD_SIZE);
+
+                if (board[xCoord][yCoord] == 0) {
+                    board[xCoord][yCoord] = 1;
+                    break;
+                }
+            }
         }
+    }
+
+    private boolean checkMine(int xCoord, int yCoord) {
+        return board[xCoord][yCoord] == 1;
     }
 
     private void printBoard() {
@@ -41,7 +52,8 @@ public class MinesBoard {
 
     // unit tester
     public static void main (String[] args) {
-        MinesBoard board = new MinesBoard("low");
+        MinesBoard board = new MinesBoard("high");
+        board.placeMines();
         board.printBoard();
     }
 }
