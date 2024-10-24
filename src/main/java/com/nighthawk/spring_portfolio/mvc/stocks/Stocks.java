@@ -1,4 +1,4 @@
-package com.nighthawk.spring_portfolio.mvc.jokes;
+package com.nighthawk.spring_portfolio.mvc.stocks;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity // Annotation to simplify creating an entity, which is a lightweight persistence domain object. Typically, an entity represents a table in a relational database, and each entity instance corresponds to a row in that table.
-public class Jokes {
+public class Stocks {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -23,7 +23,7 @@ public class Jokes {
 
     // starting jokes
     public static String[] init() {
-        final String[] jokesArray = {
+        final String[] stocksArray = {
             "If you give someone a program... you will frustrate them for a day; if you teach them how to program... you will frustrate them for a lifetime.",
             "Q: Why did I divide sin by tan? A: Just cos.",
             "UNIX is basically a simple operating system... but you have to be a genius to understand the simplicity.",
@@ -43,6 +43,6 @@ public class Jokes {
             "Q: What is the biggest lie in the entire universe? A: I have read and agree to the Terms and Conditions.",
             "An SQL statement walks into a bar and sees two tables. It approaches, and asks may I join you?"
         };
-        return jokesArray;
+        return stocksArray;
     }
 }
