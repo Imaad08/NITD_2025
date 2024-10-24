@@ -27,7 +27,6 @@ public class MinesBoard {
         for (int i = 0; i < mines; i++) {
             xCoord = rng.nextInt(0, BOARD_SIZE);
             yCoord = rng.nextInt(0, BOARD_SIZE);
-
         }
     }
 
