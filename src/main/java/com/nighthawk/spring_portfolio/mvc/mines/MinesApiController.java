@@ -15,7 +15,7 @@ public class MinesApiController {
     }
 
     @GetMapping("/winnings")
-    public ResponseEntity<Double> getWinnings(@PathVariable double pts) {
+    public ResponseEntity<Double> getWinnings() {
         return new ResponseEntity<>(board.winnings(), HttpStatus.OK);
     }
 
