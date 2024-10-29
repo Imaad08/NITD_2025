@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/poker")
 public class PokerApiController {
 
-    @Autowired
-    private PokerJpaRepository repository;
+    //@Autowired
+    //private PokerJpaRepository repository;
 
     private PokerBoard pokerBoard;
 

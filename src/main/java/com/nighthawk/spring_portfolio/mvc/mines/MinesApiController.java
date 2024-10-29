@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/casino/mines")
 public class MinesApiController {
-    @Autowired
-    private MinesJpaRepository repository;
+    //@Autowired
+    //private MinesJpaRepository repository;
 
     MinesBoard board;
 
