@@ -25,4 +25,13 @@ public class GameResult {
     public int getBet() {
         return bet;
     }
+
+    @Override
+    public String toString() {
+        return "GameResult{" +
+                "playerHand=" + playerHand +
+                ", dealerHand=" + dealerHand +
+                ", bet=" + bet +
+                '}';
+    }
 }
