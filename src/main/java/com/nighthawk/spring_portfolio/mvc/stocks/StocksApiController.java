@@ -1,12 +1,22 @@
 package com.nighthawk.spring_portfolio.mvc.stocks;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
+import yahoofinance.Stock;
+import yahoofinance.YahooFinance;
+
 
 @RestController
 @RequestMapping("/api/stocks")
@@ -22,10 +32,20 @@ public class StocksApiController {
     private UserStockJpaRepository userStockRepository;
 
     // Get all available stocks
-    @GetMapping("/all")
-    public ResponseEntity<List<Stocks>> getAllStocks() {
-        return new ResponseEntity<>(stockRepository.findAll(), HttpStatus.OK);
+     @GetMapping("/all")
+    public ResponseEntity<Map<String,Stock>> getAllStocks() {
+        String[] symbols = new String[] {"INTC", "BABA", "TSLA", "AIR.PA", "YHOO"};
+        try {
+            Map<String, Stock> stocks = YahooFinance.get(symbols); // single request
+            //Stock intel = stocks.get("INTC");
+            //Stock airbus = stocks.get("AIR.PA");
+            return new ResponseEntity<>(stocks, HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
+
 
     // Buy stock
     @PostMapping("/buy/{userId}/{stockId}/{quantity}")
