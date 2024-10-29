@@ -2,7 +2,6 @@ package com.nighthawk.spring_portfolio.mvc.stocks;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,18 +31,26 @@ public class StocksApiController {
     private UserStockJpaRepository userStockRepository;
 
     // Get all available stocks
-     @GetMapping("/all")
-    public ResponseEntity<Map<String,Stock>> getAllStocks() {
-        String[] symbols = new String[] {"INTC", "BABA", "TSLA", "AIR.PA", "YHOO"};
-        try {
-            Map<String, Stock> stocks = YahooFinance.get(symbols); // single request
-            //Stock intel = stocks.get("INTC");
-            //Stock airbus = stocks.get("AIR.PA");
-            return new ResponseEntity<>(stocks, HttpStatus.OK);
-        } catch (IOException e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+     // Get stock by ticker symbol
+     @GetMapping("/{symbol}")
+public ResponseEntity<?> getStockBySymbol(@PathVariable String symbol) {
+    try {
+        System.out.println("Fetching stock data for symbol: " + symbol); // Debug log
+        Stock stock = YahooFinance.get(symbol);
+        if (stock == null) {
+            System.out.println("No stock data returned for symbol: " + symbol);
+            return new ResponseEntity<>("Stock not found for symbol: " + symbol, HttpStatus.NOT_FOUND);
         }
+        System.out.println("Successfully fetched stock: " + stock.getName());
+        return new ResponseEntity<>(stock, HttpStatus.OK);
+    } catch (IOException e) {
+        System.out.println("Error occurred while fetching stock data: " + e.getMessage());
+        e.printStackTrace();
+        return new ResponseEntity<>("Failed to retrieve stock data" + symbol, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+}
+
+
 
 
 
