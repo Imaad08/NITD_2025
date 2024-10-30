@@ -1,32 +1,23 @@
 package com.nighthawk.spring_portfolio.mvc.stocks;
 
-import java.util.List;
-import java.util.Optional;
-
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
@@ -36,19 +27,19 @@ class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    
+
     @Column(unique = true, nullable = false)
-    private String username;
-    
+    private String username; // Unique username
+
     @Column(nullable = false)
-    private String password;
-    
-    private String role = "USER";
-    private boolean enabled = true;
-    private double balance;
-    
+    private String password; // Encrypted password
+
+    private String role = "USER"; // Role, e.g., "USER" or "ADMIN"
+    private boolean enabled = true; // Account status
+    private double balance; // User's funds
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<UserStock> userStocks;
+    private List<UserStock> userStocks; // User's stocks
 }
 
 @Repository
@@ -68,10 +59,13 @@ class UserService implements UserDetailsService {
     public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .roles(user.getRole())
+                .authorities(authorities)
                 .accountLocked(!user.isEnabled())
                 .build();
     }
@@ -79,12 +73,13 @@ class UserService implements UserDetailsService {
     public User registerUser(String username, String password, double balance) {
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(passwordEncoder.encode(password)); // Encrypt password
         user.setBalance(balance);
         return userRepository.save(user);
     }
 }
 
+// Class to encapsulate registration data for JSON request
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
