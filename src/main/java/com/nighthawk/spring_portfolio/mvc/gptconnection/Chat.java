@@ -19,7 +19,7 @@ public class Chat {
     private String apiKey;
 
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String MODEL = "gpt-3.5-turbo";  // or "gpt-4" if using GPT-4
+    private static final String MODEL = "gpt-3.5-turbo"; 
 
     public String getGptScore(String code) {
         OkHttpClient client = new OkHttpClient();
