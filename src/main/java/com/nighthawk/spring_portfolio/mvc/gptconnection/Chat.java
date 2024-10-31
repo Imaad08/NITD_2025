@@ -1,4 +1,5 @@
 package com.nighthawk.spring_portfolio.mvc.gptconnection;
+
 import java.io.IOException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -9,7 +10,6 @@ import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Value;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 
 @Service
 public class Chat {
@@ -24,9 +24,9 @@ public class Chat {
     private String assistantId;
 
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String MODEL = "gpt-4";
+    private static final String MODEL = "gpt-4o";  // Changed from "gpt-4" to "gpt-4o"
 
-    // Method to request a score from GPT-4
+    // Method to request a score from GPT-4o
     public String getGptScore(String code) {
         OkHttpClient client = new OkHttpClient();
         ObjectMapper mapper = new ObjectMapper();
