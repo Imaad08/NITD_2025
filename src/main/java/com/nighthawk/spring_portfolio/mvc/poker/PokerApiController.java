@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/poker")
+@RequestMapping("/api/casino/poker")
 public class PokerApiController {
 
     private PokerBoard pokerBoard;

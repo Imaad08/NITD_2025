@@ -16,7 +16,7 @@ import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 
 @RestController
-@RequestMapping("/api/blackjack")
+@RequestMapping("/api/casino/blackjack")
 public class BlackjackApiController {
     @Autowired
     private BlackjackJpaRepository repository;
