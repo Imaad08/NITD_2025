@@ -1,4 +1,5 @@
 package com.nighthawk.spring_portfolio.mvc.gptconnection;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,19 +15,19 @@ public class GptController {
     @Autowired
     private GptRepository gptRepository;
 
+    private static final String THREAD_ID = UUID.randomUUID().toString();
+
     @PostMapping("/grade")
     public String gradeCode(@RequestBody String code) {
-        // Generate a unique thread ID for this grading request
-        String threadId = UUID.randomUUID().toString();
+        String threadId = THREAD_ID;
 
-        // Get GPT's score response
+
         String gptResponse = chatService.getGptScore(code);
 
-        // Save the entry in the database
         GptEntry entry = new GptEntry();
         entry.setCode(code);
         entry.setGptResponse(gptResponse);
-        entry.setThreadId(threadId);
+        entry.setThreadId(threadId); 
         gptRepository.save(entry);
 
         return gptResponse;
