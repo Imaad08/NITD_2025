@@ -44,7 +44,7 @@ public class BlackjackApiController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
-
+// fix game id stuff?
     @PostMapping("/hit/{gameId}")
     public ResponseEntity<Blackjack> hit(@PathVariable Long gameId) {
         Optional<Blackjack> optionalGame = repository.findById(gameId);
