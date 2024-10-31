@@ -32,7 +32,7 @@ public class Chat {
         // Construct messages array
         ObjectNode userMessage = mapper.createObjectNode();
         userMessage.put("role", "user");
-        userMessage.put("content", "Please grade this code and provide only a numeric score (0-100): " + code);
+        userMessage.put("content", "Please grade this code/answer and provide only a numeric score (0-1000) with this rubric Correctness and Completeness (500 points): 500 - completely correct, 450 - minor issues or unhandled edge cases, 400 - several small errors, 350 - partial with multiple issues, below 300 - major issues/incomplete; Efficiency and Optimization (200 points): 200 - optimal or near-optimal, 180 - minor optimization needed, 160 - functional but inefficient, 140 - improvements needed, below 140 - inefficient; Code Structure and Organization (150 points): 150 - well-organized, 130 - mostly organized, 110 - readable but lacks structure, 90 - hard to follow, below 90 - unorganized; Readability and Documentation (100 points): 100 - clear, well-documented, 85 - readable but limited comments, 70 - somewhat readable, 50 - minimally readable, below 50 - poor readability; Error Handling and Edge Cases (50 points): 50 - handles all cases, 40 - most cases covered, 30 - some cases covered, 20 - minimal handling, below 20 - little attention; Extra Credit (100 points): impressive/innovative elements. Give me a integer score from 1-1000 and only an integer no text around it." + code);
 
         requestBody.putArray("messages").add(userMessage);
         requestBody.put("temperature", 0.0);
