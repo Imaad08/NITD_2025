@@ -1,18 +1,22 @@
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
-import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor
@@ -24,14 +28,14 @@ public class Blackjack {
     private Long id;
 
     @NonNull
-    private Long playerId;  // References Person entity
+    private Long playerId;  // ref to person
 
     private int betAmount;
-    private String gameStatus; // "IN_PROGRESS", "PLAYER_WON", "DEALER_WON", "PUSH"
+    private String gameStatus; // (diff statuses) "IN_PROGRESS", "PLAYER_WON", "DEALER_WON", "PUSH"
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Map<String, Object> gameState = new HashMap<>();  // Stores cards, scores, etc.
+    private Map<String, Object> gameState = new HashMap<>();  // databse storing cards, scores
 
     public Blackjack(Long playerId, int betAmount) {
         this.playerId = playerId;

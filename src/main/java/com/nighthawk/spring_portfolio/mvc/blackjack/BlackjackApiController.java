@@ -1,14 +1,19 @@
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
-
-import java.util.*;
 
 @RestController
 @RequestMapping("/api/blackjack")
@@ -45,7 +50,7 @@ public class BlackjackApiController {
         Optional<Blackjack> optionalGame = repository.findById(gameId);
         if (optionalGame.isPresent()) {
             Blackjack game = optionalGame.get();
-            // Add hit logic here
+            // hit logic ????
             return new ResponseEntity<>(game, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -56,7 +61,7 @@ public class BlackjackApiController {
         Optional<Blackjack> optionalGame = repository.findById(gameId);
         if (optionalGame.isPresent()) {
             Blackjack game = optionalGame.get();
-            // Add stand logic here
+            // stand logic ???
             return new ResponseEntity<>(game, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
