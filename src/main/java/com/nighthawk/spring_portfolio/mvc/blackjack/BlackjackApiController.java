@@ -1,12 +1,10 @@
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,23 +43,25 @@ public class BlackjackApiController {
         }
     }
 // fix game id stuff?
-    @PostMapping("/hit/{gameId}")
-    public ResponseEntity<Blackjack> hit(@PathVariable Long gameId) {
-        Optional<Blackjack> optionalGame = repository.findById(gameId);
-        if (optionalGame.isPresent()) {
-            Blackjack game = optionalGame.get();
-            // hit logic ????
+    @PostMapping("/hit")
+    public ResponseEntity<Blackjack> hit(@RequestBody Map<String, Object> request) {
+        Long playerId = Long.parseLong(request.get("playerId").toString());
+        Blackjack game = repository.findByPlayerId(playerId).orElse(null);
+        if (game != null) {
+            // Add hit logic here
+            repository.save(game);
             return new ResponseEntity<>(game, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping("/stand/{gameId}")
-    public ResponseEntity<Blackjack> stand(@PathVariable Long gameId) {
-        Optional<Blackjack> optionalGame = repository.findById(gameId);
-        if (optionalGame.isPresent()) {
-            Blackjack game = optionalGame.get();
-            // stand logic ???
+    @PostMapping("/stand")
+    public ResponseEntity<Blackjack> stand(@RequestBody Map<String, Object> request) {
+        Long playerId = Long.parseLong(request.get("playerId").toString());
+        Blackjack game = repository.findByPlayerId(playerId).orElse(null);
+        if (game != null) {
+            // Add stand logic here
+            repository.save(game);
             return new ResponseEntity<>(game, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
