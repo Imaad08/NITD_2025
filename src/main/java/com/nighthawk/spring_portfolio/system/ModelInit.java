@@ -1,11 +1,17 @@
 package com.nighthawk.spring_portfolio.system;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nighthawk.spring_portfolio.mvc.announcement.Announcement;
+import com.nighthawk.spring_portfolio.mvc.announcement.AnnouncementJPA;
 import com.nighthawk.spring_portfolio.mvc.jokes.Jokes;
 import com.nighthawk.spring_portfolio.mvc.jokes.JokesJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.note.Note;
@@ -14,13 +20,13 @@ import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonDetailsService;
 import com.nighthawk.spring_portfolio.mvc.person.PersonRole;
 import com.nighthawk.spring_portfolio.mvc.person.PersonRoleJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.announcement.Announcement;
-import com.nighthawk.spring_portfolio.mvc.announcement.AnnouncementJPA;
+import com.nighthawk.spring_portfolio.mvc.rpg.player.Player;
+import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerCsClass;
+import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerCsClassJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerDetailsService;
+import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
+import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
@@ -29,7 +35,14 @@ public class ModelInit {
     @Autowired NoteJpaRepository noteRepo;
     @Autowired PersonRoleJpaRepository roleJpaRepository;
     @Autowired PersonDetailsService personDetailsService;
+
+    @Autowired PlayerCsClassJpaRepository csclassJpaRepository;
+    @Autowired PlayerDetailsService playerDetailsService;
+
+
     @Autowired AnnouncementJPA announcementJPA;
+
+    @Autowired QuestionJpaRepository questionJpaRepository;
 
     @Bean
     @Transactional
@@ -54,6 +67,14 @@ public class ModelInit {
                     jokesRepo.save(new Jokes(null, joke, 0, 0)); //JPA save
             }
 
+            Question[] questionArray = Question.init();
+            for (Question question : questionArray) {
+                Question questionFound = questionJpaRepository.findByTitle(question.getTitle());
+                if (questionFound == null) {
+                    questionJpaRepository.save(new Question(question.getTitle(), question.getContent(), question.getBadge_name(), question.getPoints()));
+                }
+            }
+ 
             // Person database is populated with starting people
             Person[] personArray = Person.init();
             for (Person person : personArray) {
@@ -85,6 +106,36 @@ public class ModelInit {
                     noteRepo.save(n);  // JPA Save                  
                 }
             }
+
+
+            Player[] playerArray = Player.init();
+            for (Player player : playerArray) {
+                // Name and email are used to lookup the player
+                List<Player> playerFound = playerDetailsService.searchPlayers(player.getName(), player.getEmail());  // lookup
+                if (playerFound.size() == 0) { // add if not found
+                    // Roles are added to the database if they do not exist
+                    List<PlayerCsClass> updatedCsClasses = new ArrayList<>();
+                    for (PlayerCsClass csclass : player.getCsclasses()) {
+                        // Name is used to lookup the role
+                        PlayerCsClass csclassFound = csclassJpaRepository.findByName(csclass.getName());  // JPA lookup
+                        if (csclassFound == null) { // add if not found
+                            // Save the new role to database
+                            csclassJpaRepository.save(csclass);  // JPA save
+                            csclassFound = csclass;
+                        }
+                        // Accumulate reference to role from database
+                        updatedCsClasses.add(csclassFound);
+                    }
+                    // Update person with roles from role databasea
+                    player.setCsclasses(updatedCsClasses); // Object reference is updated
+
+                    // Save player to database
+                    playerDetailsService.savePlayer(player); // JPA save
+                }
+            }
+
+
+
 
         };
     }
