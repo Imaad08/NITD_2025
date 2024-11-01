@@ -50,7 +50,7 @@ public class Leaderboard {
         return leaders.toArray(new Leaderboard[0]);  // Converts List to array
     }
 
-    // Main method
+    // Main 
     public static void main(String[] args) {
         // Initialize leaderboard entries
         Leaderboard[] leaders = init();
