@@ -93,14 +93,42 @@ class UserService implements UserDetailsService {
     public void addStock(String username, int quantity, String stockSymbol) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        String newStock = quantity + "-" + stockSymbol;
-        if (user.getStonks() == null || user.getStonks().isEmpty()) {
-            user.setStonks(newStock);
-        } else {
-            user.setStonks(user.getStonks() + "," + newStock);
+    
+        String existingStonks = user.getStonks();
+        StringBuilder updatedStonks = new StringBuilder();
+        boolean stockExists = false;
+    
+        if (existingStonks != null && !existingStonks.isEmpty()) {
+            String[] stocks = existingStonks.split(",");
+            
+            for (String stock : stocks) {
+                String[] parts = stock.split("-");
+                int currentQuantity = Integer.parseInt(parts[0]);
+                String currentStockSymbol = parts[1];
+    
+                if (currentStockSymbol.equals(stockSymbol)) {
+                    // If stock symbol matches, add quantities
+                    currentQuantity += quantity;
+                    stockExists = true;
+                }
+                
+                updatedStonks.append(currentQuantity).append("-").append(currentStockSymbol).append(",");
+            }
         }
+    
+        if (!stockExists) {
+            // If the stock symbol is new, add it to the list
+            updatedStonks.append(quantity).append("-").append(stockSymbol).append(",");
+        }
+    
+        // Remove trailing comma and update user's stonks
+        if (updatedStonks.length() > 0) {
+            updatedStonks.setLength(updatedStonks.length() - 1);
+        }
+        
+        user.setStonks(updatedStonks.toString());
         userRepository.save(user);
-    }
+    }    
 
     public void removeStock(String username, int quantityToRemove, String stockSymbol) {
         User user = userRepository.findByUsername(username)
