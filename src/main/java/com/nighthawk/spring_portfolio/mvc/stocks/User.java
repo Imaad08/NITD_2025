@@ -40,18 +40,18 @@ class User {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String username; // Unique username
+    private String username;
 
     @Column(nullable = false)
-    private String password; // Encrypted password
+    private String password;
 
-    private String role = "USER"; // Role, e.g., "USER" or "ADMIN"
-    private boolean enabled = true; // Account status
-    private double balance; // User's funds
+    private String role = "USER";
+    private boolean enabled = true;
+    private double balance;
     private String stonks;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<UserStock> userStocks; // User's stocks
+    private List<UserStock> userStocks;
 }
 
 @Repository
@@ -85,7 +85,7 @@ class UserService implements UserDetailsService {
     public User registerUser(String username, String password, double balance) {
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password)); // Encrypt password
+        user.setPassword(passwordEncoder.encode(password));
         user.setBalance(balance);
         return userRepository.save(user);
     }
@@ -99,6 +99,52 @@ class UserService implements UserDetailsService {
         } else {
             user.setStonks(user.getStonks() + "," + newStock);
         }
+        userRepository.save(user);
+    }
+
+    public void removeStock(String username, int quantityToRemove, String stockSymbol) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getStonks() == null || user.getStonks().isEmpty()) {
+            throw new RuntimeException("No stocks to remove.");
+        }
+
+        String[] stocks = user.getStonks().split(",");
+        StringBuilder updatedStonks = new StringBuilder();
+
+        boolean stockFound = false;
+
+        for (String stock : stocks) {
+            String[] parts = stock.split("-");
+            int currentQuantity = Integer.parseInt(parts[0]);
+            String currentStockSymbol = parts[1];
+
+            if (currentStockSymbol.equals(stockSymbol)) {
+                stockFound = true;
+                currentQuantity -= quantityToRemove;
+
+                if (currentQuantity < 0) {
+                    throw new RuntimeException("Cannot remove more stocks than owned.");
+                }
+
+                if (currentQuantity > 0) {
+                    updatedStonks.append(currentQuantity).append("-").append(currentStockSymbol).append(",");
+                }
+            } else {
+                updatedStonks.append(stock).append(",");
+            }
+        }
+
+        if (!stockFound) {
+            throw new RuntimeException("Stock symbol not found.");
+        }
+
+        if (updatedStonks.length() > 0) {
+            updatedStonks.setLength(updatedStonks.length() - 1);
+        }
+
+        user.setStonks(updatedStonks.toString());
         userRepository.save(user);
     }
 }
@@ -143,6 +189,17 @@ class UserController {
         try {
             userService.addStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
             return "Stock added successfully!";
+        } catch (Exception e) {
+            return "An error occurred: " + e.getMessage();
+        }
+    }
+
+    @PostMapping("/removeStock")
+    @ResponseBody
+    public String removeStock(@RequestBody StockRequest request) {
+        try {
+            userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
+            return "Stock removed successfully!";
         } catch (Exception e) {
             return "An error occurred: " + e.getMessage();
         }
