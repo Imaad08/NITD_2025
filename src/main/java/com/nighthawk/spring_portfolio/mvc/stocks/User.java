@@ -2,7 +2,6 @@ package com.nighthawk.spring_portfolio.mvc.stocks;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,8 +36,8 @@ import lombok.NoArgsConstructor;
 @Entity
 class User {
     @Id
-    @GeneratedValue(strategy=GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy=GenerationType.AUTO)
+    private Long id;
 
     @Column(unique = true, nullable = false)
     private String username; // Unique username
@@ -90,6 +89,18 @@ class UserService implements UserDetailsService {
         user.setBalance(balance);
         return userRepository.save(user);
     }
+
+    public void addStock(String username, int quantity, String stockSymbol) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        String newStock = quantity + "-" + stockSymbol;
+        if (user.getStonks() == null || user.getStonks().isEmpty()) {
+            user.setStonks(newStock);
+        } else {
+            user.setStonks(user.getStonks() + "," + newStock);
+        }
+        userRepository.save(user);
+    }
 }
 
 // Class to encapsulate registration data for JSON request
@@ -100,6 +111,15 @@ class UserRegistrationRequest {
     private String username;
     private String password;
     private double balance;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class StockRequest {
+    private String username;
+    private int quantity;
+    private String stockSymbol;
 }
 
 @Controller
@@ -115,5 +135,16 @@ class UserController {
             return "User registered successfully!";
         }
         return "Registration failed!";
+    }
+
+    @PostMapping("/addStock")
+    @ResponseBody
+    public String addStock(@RequestBody StockRequest request) {
+        try {
+            userService.addStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
+            return "Stock added successfully!";
+        } catch (Exception e) {
+            return "An error occurred: " + e.getMessage();
+        }
     }
 }
