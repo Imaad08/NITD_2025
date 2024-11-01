@@ -1,5 +1,6 @@
 package com.nighthawk.spring_portfolio.mvc.stocks;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,9 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.persistence.CascadeType;
@@ -36,7 +39,7 @@ import lombok.NoArgsConstructor;
 @Entity
 class User {
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @Column(unique = true, nullable = false)
@@ -93,11 +96,11 @@ class UserService implements UserDetailsService {
     public void addStock(String username, int quantity, String stockSymbol) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-    
+
         String existingStonks = user.getStonks();
         StringBuilder updatedStonks = new StringBuilder();
         boolean stockExists = false;
-    
+
         if (existingStonks != null && !existingStonks.isEmpty()) {
             String[] stocks = existingStonks.split(",");
             
@@ -105,9 +108,8 @@ class UserService implements UserDetailsService {
                 String[] parts = stock.split("-");
                 int currentQuantity = Integer.parseInt(parts[0]);
                 String currentStockSymbol = parts[1];
-    
+
                 if (currentStockSymbol.equals(stockSymbol)) {
-                    // If stock symbol matches, add quantities
                     currentQuantity += quantity;
                     stockExists = true;
                 }
@@ -115,69 +117,84 @@ class UserService implements UserDetailsService {
                 updatedStonks.append(currentQuantity).append("-").append(currentStockSymbol).append(",");
             }
         }
-    
+
         if (!stockExists) {
-            // If the stock symbol is new, add it to the list
             updatedStonks.append(quantity).append("-").append(stockSymbol).append(",");
         }
-    
-        // Remove trailing comma and update user's stonks
+
         if (updatedStonks.length() > 0) {
             updatedStonks.setLength(updatedStonks.length() - 1);
         }
         
         user.setStonks(updatedStonks.toString());
         userRepository.save(user);
-    }    
+    }
 
-    public void removeStock(String username, int quantityToRemove, String stockSymbol) {
+    public void removeStock(String username, int quantity, String stockSymbol) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getStonks() == null || user.getStonks().isEmpty()) {
-            throw new RuntimeException("No stocks to remove.");
-        }
-
-        String[] stocks = user.getStonks().split(",");
+        String existingStonks = user.getStonks();
         StringBuilder updatedStonks = new StringBuilder();
 
-        boolean stockFound = false;
+        if (existingStonks != null && !existingStonks.isEmpty()) {
+            String[] stocks = existingStonks.split(",");
+            
+            for (String stock : stocks) {
+                String[] parts = stock.split("-");
+                int currentQuantity = Integer.parseInt(parts[0]);
+                String currentStockSymbol = parts[1];
 
-        for (String stock : stocks) {
-            String[] parts = stock.split("-");
-            int currentQuantity = Integer.parseInt(parts[0]);
-            String currentStockSymbol = parts[1];
-
-            if (currentStockSymbol.equals(stockSymbol)) {
-                stockFound = true;
-                currentQuantity -= quantityToRemove;
-
-                if (currentQuantity < 0) {
-                    throw new RuntimeException("Cannot remove more stocks than owned.");
+                if (currentStockSymbol.equals(stockSymbol)) {
+                    if (currentQuantity < quantity) {
+                        throw new RuntimeException("Not enough stock quantity to remove");
+                    }
+                    currentQuantity -= quantity;
                 }
 
                 if (currentQuantity > 0) {
                     updatedStonks.append(currentQuantity).append("-").append(currentStockSymbol).append(",");
                 }
-            } else {
-                updatedStonks.append(stock).append(",");
             }
-        }
-
-        if (!stockFound) {
-            throw new RuntimeException("Stock symbol not found.");
         }
 
         if (updatedStonks.length() > 0) {
             updatedStonks.setLength(updatedStonks.length() - 1);
         }
-
+        
         user.setStonks(updatedStonks.toString());
         userRepository.save(user);
     }
+
+    public List<UserStockInfo> getUserStocks(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<UserStockInfo> stockList = new ArrayList<>();
+        
+        if (user.getStonks() != null && !user.getStonks().isEmpty()) {
+            String[] stocks = user.getStonks().split(",");
+            
+            for (String stock : stocks) {
+                String[] parts = stock.split("-");
+                int quantity = Integer.parseInt(parts[0]);
+                String stockSymbol = parts[1];
+                stockList.add(new UserStockInfo(stockSymbol, quantity));
+            }
+        }
+
+        return stockList;
+    }
 }
 
-// Class to encapsulate registration data for JSON request
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class UserStockInfo {
+    private String stockSymbol;
+    private int quantity;
+}
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -231,5 +248,11 @@ class UserController {
         } catch (Exception e) {
             return "An error occurred: " + e.getMessage();
         }
+    }
+
+    @GetMapping("/getStocks")
+    @ResponseBody
+    public List<UserStockInfo> getStocks(@RequestParam String username) {
+        return userService.getUserStocks(username);
     }
 }
