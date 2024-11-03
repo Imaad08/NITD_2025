@@ -33,17 +33,20 @@ public class DiceApiController {
     public ResponseEntity<User> postDice(@RequestBody DiceRequest diceRequest) {
         System.out.println("Received request: " + diceRequest);
         Dice dice = new Dice(diceRequest.getWinChance(), diceRequest.getBetSize());
-
+        System.out.println(diceRequest.getUsername());
+        
         Optional<User> optionalUser = userJpaRepository.findByUsername(diceRequest.getUsername());
         if (optionalUser.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // User not found
         }
 
-        User user = optionalUser.get();
+        User user = optionalUser.get();  // Safe to get user now
+        System.out.println(user);
         double currentBalance = user.getBalance();
         user.setBalance(currentBalance + dice.calculateWin());
         userJpaRepository.save(user);  // Save the updated balance
 
         return new ResponseEntity<>(user, HttpStatus.OK);  // Return updated user data
     }
+
 }
