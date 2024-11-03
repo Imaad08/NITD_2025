@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nighthawk.spring_portfolio.mvc.stocks.UserStock;
-import com.nighthawk.spring_portfolio.mvc.stocks.UserStockJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.stocks.User;
+import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
 
 import lombok.Getter;
 
@@ -20,7 +20,7 @@ import lombok.Getter;
 public class DiceApiController {
 
     @Autowired
-    private UserStockJpaRepository userStockJpaRepository;
+    private UserJpaRepository userJpaRepository;
 
     @Getter 
     public static class DiceRequest {
@@ -30,20 +30,20 @@ public class DiceApiController {
     }
 
     @PostMapping("/calculate")
-    public ResponseEntity<UserStock> postDice(@RequestBody DiceRequest diceRequest) {
+    public ResponseEntity<User> postDice(@RequestBody DiceRequest diceRequest) {
         System.out.println("Received request: " + diceRequest);
         Dice dice = new Dice(diceRequest.getWinChance(), diceRequest.getBetSize());
 
-        Optional<UserStock> optionalUserStock = userStockJpaRepository.findByUsername(diceRequest.getUsername());
-        if (optionalUserStock.isEmpty()) {
+        Optional<User> optionalUser = userJpaRepository.findByUsername(diceRequest.getUsername());
+        if (optionalUser.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        UserStock userStock = optionalUserStock.get();
-        double currentBalance = userStock.getUser().getBalance();
-        userStock.getUser().setBalance(currentBalance + dice.calculateWin());
-        userStockJpaRepository.save(userStock);  // Save the updated balance
+        User user = optionalUser.get();
+        double currentBalance = user.getBalance();
+        user.setBalance(currentBalance + dice.calculateWin());
+        userJpaRepository.save(user);  // Save the updated balance
 
-        return new ResponseEntity<>(userStock, HttpStatus.OK);  // Return updated user data
+        return new ResponseEntity<>(user, HttpStatus.OK);  // Return updated user data
     }
 }
