@@ -8,15 +8,18 @@ import java.util.Map;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.nighthawk.spring_portfolio.mvc.person.Person;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 
 @Data
 @AllArgsConstructor
@@ -27,18 +30,19 @@ public class Blackjack {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @NonNull
-    private Long playerId;  // ref to person
+    @ManyToOne
+    @JoinColumn(name = "person_id")
+    private Person person;  // Changed from playerId to person
 
     private int betAmount;
-    private String gameStatus; // (diff statuses) "IN_PROGRESS", "PLAYER_WON", "DEALER_WON", "PUSH"
+    private String gameStatus;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Map<String, Object> gameState = new HashMap<>();  // databse storing cards, scores
+    private Map<String, Object> gameState = new HashMap<>();
 
-    public Blackjack(Long playerId, int betAmount) {
-        this.playerId = playerId;
+    public Blackjack(Person person, int betAmount) {  // Updated constructor
+        this.person = person;
         this.betAmount = betAmount;
         this.gameStatus = "IN_PROGRESS";
         initializeGame();
