@@ -93,6 +93,15 @@ class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    public boolean checkPassword(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+    // Additional methods for stock management...
     public void addStock(String username, int quantity, String stockSymbol) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -207,6 +216,14 @@ class UserRegistrationRequest {
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+class UserLoginRequest {
+    private String username;
+    private String password;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class StockRequest {
     private String username;
     private int quantity;
@@ -226,6 +243,20 @@ class UserController {
             return "User registered successfully!";
         }
         return "Registration failed!";
+    }
+
+    @PostMapping("/login") // New endpoint for user login
+    @ResponseBody
+    public String loginUser(@RequestBody UserLoginRequest request) {
+        Optional<User> userOptional = userService.findByUsername(request.getUsername());
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            // Check if the password matches the stored encoded password
+            if (userService.checkPassword(request.getPassword(), user.getPassword())) {
+                return "User logged in successfully!";
+            }
+        }
+        return "Invalid username or password!";
     }
 
     @PostMapping("/addStock")
