@@ -116,7 +116,7 @@ public class BlackjackApiController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            // Mark game as inactive
+            // Marking game as inactive idek 
             game.setStatus("INACTIVE");
             repository.save(game);
             logger.info("Player stands and game marked as inactive.");

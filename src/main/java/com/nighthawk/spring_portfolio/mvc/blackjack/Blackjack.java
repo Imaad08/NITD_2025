@@ -36,7 +36,7 @@ public class Blackjack {
 
     private int betAmount;
     private String gameStatus;
-    private String status = "ACTIVE"; // New field to track game status
+    private String status = "ACTIVE"; // game status traxker
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
