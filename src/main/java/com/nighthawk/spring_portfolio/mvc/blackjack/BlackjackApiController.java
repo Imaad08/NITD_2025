@@ -1,9 +1,11 @@
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
 import java.util.List;
-import java.util.Map;  // Added this import
+import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;  // Added this import
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,33 +25,33 @@ public class BlackjackApiController {
     @Autowired
     private PersonJpaRepository personRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(BlackjackApiController.class);
+
     @PostMapping("/start")
     public ResponseEntity<Blackjack> startGame(@RequestBody Map<String, Object> request) {
         try {
-            // Find person by email
             String email = request.get("email").toString();
+            String password = request.get("password").toString();
+            
             Person person = personRepository.findByEmail(email);
             
             if (person == null) {
+                logger.error("Person not found with email: " + email);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-            // Verify password (basic authentication)
-            String password = request.get("password").toString();
-            if (!person.getPassword().equals(password)) {
-                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
 
             int betAmount = request.containsKey("betAmount") 
                 ? Integer.parseInt(request.get("betAmount").toString()) 
                 : 10;
 
-            // Create new game with Person object
             Blackjack game = new Blackjack(person, betAmount);
             repository.save(game);
             return new ResponseEntity<>(game, HttpStatus.OK);
+        } catch (NumberFormatException e) {
+            logger.error("Invalid bet amount", e);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error starting game", e);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -61,20 +63,20 @@ public class BlackjackApiController {
             Person person = personRepository.findByEmail(email);
             
             if (person == null) {
+                logger.error("Person not found with email: " + email);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            // Find game by person instead of playerId
-            Blackjack game = repository.findByPerson(person).orElse(null);
+            Blackjack game = repository.findFirstByPersonAndStatusOrderByIdDesc(person, "ACTIVE").orElse(null);
             
             if (game == null) {
+                logger.error("No ongoing game for person: " + email);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            // Add hit logic here
-            @SuppressWarnings("unchecked")  // Added to suppress unchecked cast warning
+            @SuppressWarnings("unchecked")
             List<String> playerHand = (List<String>) game.getGameState().get("playerHand");
-            @SuppressWarnings("unchecked")  // Added to suppress unchecked cast warning
+            @SuppressWarnings("unchecked")
             List<String> deck = (List<String>) game.getGameState().get("deck");
 
             if (!deck.isEmpty()) {
@@ -86,11 +88,13 @@ public class BlackjackApiController {
                 game.getGameState().put("playerScore", calculateScore(playerHand));
 
                 repository.save(game);
+                logger.info("Player hit: " + drawnCard + " added to hand.");
                 return new ResponseEntity<>(game, HttpStatus.OK);
             }
+            logger.error("Deck is empty");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error processing hit request", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -102,18 +106,23 @@ public class BlackjackApiController {
             Person person = personRepository.findByEmail(email);
             
             if (person == null) {
+                logger.error("Person not found with email: " + email);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            Blackjack game = repository.findByPerson(person).orElse(null);
-            if (game != null) {
-                // Add stand logic here
-                repository.save(game);
-                return new ResponseEntity<>(game, HttpStatus.OK);
+            Blackjack game = repository.findFirstByPersonAndStatusOrderByIdDesc(person, "ACTIVE").orElse(null);
+            if (game == null) {
+                logger.error("No ongoing game for person: " + email);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+            // Mark game as inactive
+            game.setStatus("INACTIVE");
+            repository.save(game);
+            logger.info("Player stands and game marked as inactive.");
+            return new ResponseEntity<>(game, HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error processing stand request", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -32,16 +32,17 @@ public class Blackjack {
 
     @ManyToOne
     @JoinColumn(name = "person_id")
-    private Person person;  // Changed from playerId to person
+    private Person person;
 
     private int betAmount;
     private String gameStatus;
+    private String status = "ACTIVE"; // New field to track game status
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> gameState = new HashMap<>();
 
-    public Blackjack(Person person, int betAmount) {  // Updated constructor
+    public Blackjack(Person person, int betAmount) {
         this.person = person;
         this.betAmount = betAmount;
         this.gameStatus = "IN_PROGRESS";
