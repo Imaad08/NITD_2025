@@ -7,7 +7,6 @@ import java.util.List;
 
 @Repository
 public interface LeaderboardJpaRepository extends JpaRepository<Leaderboard, Long> {
-
     // Optional: Define custom queries if needed
     List<Leaderboard> findAllByOrderByScoreDesc(); // To get the leaderboard ordered by score descending
 }

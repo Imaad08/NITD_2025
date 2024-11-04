@@ -14,6 +14,8 @@ import com.nighthawk.spring_portfolio.mvc.announcement.Announcement;
 import com.nighthawk.spring_portfolio.mvc.announcement.AnnouncementJPA;
 import com.nighthawk.spring_portfolio.mvc.jokes.Jokes;
 import com.nighthawk.spring_portfolio.mvc.jokes.JokesJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.rpg.leaderboard.Leaderboard;
+import com.nighthawk.spring_portfolio.mvc.rpg.leaderboard.LeaderboardJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.note.Note;
 import com.nighthawk.spring_portfolio.mvc.note.NoteJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
@@ -32,6 +34,7 @@ import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
 public class ModelInit {  
     @Autowired JokesJpaRepository jokesRepo;
+    @Autowired LeaderboardJpaRepository leaderboardJpaRepository;
     @Autowired NoteJpaRepository noteRepo;
     @Autowired PersonRoleJpaRepository roleJpaRepository;
     @Autowired PersonDetailsService personDetailsService;
@@ -65,6 +68,14 @@ public class ModelInit {
                 List<Jokes> jokeFound = jokesRepo.findByJokeIgnoreCase(joke);  // JPA lookup
                 if (jokeFound.size() == 0)
                     jokesRepo.save(new Jokes(null, joke, 0, 0)); //JPA save
+            }
+
+            Leaderboard[] leaders = Leaderboard.init();
+            for (Leaderboard leader: leaders) {
+                Leaderboard leaderboardFound = leaderboardJpaRepository.findAllByOrderByScoreDesc();
+                if (leaderboardFound == null) {
+                    leaderboardJpaRepository.save(new Leaderboard(leaderboard.get))
+                }
             }
 
             Question[] questionArray = Question.init();
