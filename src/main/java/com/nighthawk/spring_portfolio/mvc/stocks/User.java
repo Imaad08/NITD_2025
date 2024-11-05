@@ -26,6 +26,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+
+import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
+import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -71,6 +74,9 @@ interface UserRepository extends JpaRepository<User, Long> {
 class UserService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private QuestionJpaRepository questionJpaRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -227,6 +233,33 @@ class UserService implements UserDetailsService {
         }
 
         return stockList;
+    }
+
+    public User updateBalance(long questionId, long answerId, long userId) {
+
+        // Fetch the question, answer, and user from the database
+        Optional<Question> questionOpt = questionJpaRepository.findById(questionId);
+        
+        Optional<User> userOpt = userRepository.findById(userId);
+    
+        // Check if the entities are present
+        if (questionOpt.isPresent() && userOpt.isPresent()) {
+            Question question = questionOpt.get();
+            
+            User user = userOpt.get();
+    
+            double questionPoints = question.getPoints();
+            
+            user.setBalance(user.getBalance() + questionPoints);
+    
+            userRepository.save(user);
+    
+            return user;
+        } else {
+            // Handle cases where any of the entities are not found
+            System.out.println("Question, Answer, or User not found.");
+            return null;
+        }
     }
 }
 
