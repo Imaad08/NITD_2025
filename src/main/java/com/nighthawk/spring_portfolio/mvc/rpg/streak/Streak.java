@@ -1,7 +1,6 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.streak;
 
 import java.util.ArrayList;
-import java.util.List;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

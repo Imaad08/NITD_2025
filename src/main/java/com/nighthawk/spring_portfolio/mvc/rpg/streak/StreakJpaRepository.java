@@ -1,10 +1,12 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.streak;
 
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
 
+@Repository
 public interface StreakJpaRepository extends JpaRepository<Streak, Long> {
-    List<Streak> findByUserId(Long userId);
-    Optional<Streak> findByUserIdAndMaxStreak(Long userId, int maxStreak);
+    
+    // Define any custom query methods if needed
+    List<Streak> findByUserIdOrMaxStreak(Long userId, int maxStreak);
 }
