@@ -72,9 +72,9 @@ public class ModelInit {
 
             Leaderboard[] leaders = Leaderboard.init();
             for (Leaderboard leader: leaders) {
-                Leaderboard leaderboardFound = leaderboardJpaRepository.findByPlayerName(String playerName);
+                Leaderboard leaderboardFound = leaderboardJpaRepository.findByPlayerName(leader.getPlayerName());
                 if (leaderboardFound == null) {
-                    leaderboardJpaRepository.save(new Leaderboard(leaderboard.get))
+                    leaderboardJpaRepository.save(new Leaderboard(leader.getPlayerName(), leader.getRank(), leader.getScore(), leader.getDate()));
                 }
             }
 
