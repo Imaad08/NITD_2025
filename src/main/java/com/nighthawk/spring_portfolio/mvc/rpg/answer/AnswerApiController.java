@@ -1,10 +1,13 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.answer;
 
+import java.util.ArrayList;
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +57,34 @@ public class AnswerApiController {
         
         return new ResponseEntity<>(answer, HttpStatus.OK);
     }
+    @Getter
+    public static class LeaderboardDto {
+        private String playerName;
+        private int totalScore;
+    }
+
+    @Autowired
+    @GetMapping("/leaderboard")
+    public List<LeaderboardEntry> getLeaderboard() {
+        List<Object[]> top10Players = answerRepository.findTop10PlayersByTotalScore();
+        List<LeaderboardEntry> leaderboardEntries = new ArrayList<>();
+
+        int rank = 1;
+        for (Object[] playerData : top10Players) {
+            String playerName = (String) playerData[0];
+            Integer totalScore = (Integer) playerData[1];
+
+            LeaderboardEntry entry = new LeaderboardEntry();
+            entry.setPlayerName(playerName);
+            entry.setChatScore(totalScore);
+            entry.setRank(rank);
+            leaderboardEntries.add(entry);
+            rank++;
+        }
+
+        return leaderboardEntries;
+    }
+}
 
     // @GetMapping("/leaderboard") 
     // public ResponseEntity<List<Player>> getLeaderboard() {
