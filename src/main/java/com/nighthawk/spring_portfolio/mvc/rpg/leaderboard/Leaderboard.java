@@ -27,7 +27,6 @@ public class Leaderboard {
     @Column(nullable = false, unique = true)
     private int score;
 
-    // Optional fields for additional information, like timestamp
     @Column(nullable = false, unique = true)
     private String date;
 
@@ -41,7 +40,6 @@ public class Leaderboard {
         this.date = date;
     }
 
-    // Static initializer method
     public static Leaderboard[] init() {
         ArrayList<Leaderboard> leaders = new ArrayList<>();
         leaders.add(new Leaderboard("Tanav", 1, 1500, "2024-10-31"));
@@ -50,14 +48,11 @@ public class Leaderboard {
         return leaders.toArray(new Leaderboard[0]);  // Converts List to array
     }
 
-    // Main 
     public static void main(String[] args) {
-        // Initialize leaderboard entries
         Leaderboard[] leaders = init();
 
-        // Enhanced for loop to print each leaderboard entry
         for (Leaderboard leader : leaders) {
-            System.out.println(leader);  // Print leaderboard object
+            System.out.println(leader); 
         }
     }
 }
