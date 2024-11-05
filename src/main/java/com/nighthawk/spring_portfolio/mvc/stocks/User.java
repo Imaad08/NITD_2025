@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -50,7 +55,7 @@ class User {
 
     private String role = "USER";
     private boolean enabled = true;
-    private double balance;
+    public double balance;
     private String stonks;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -101,10 +106,35 @@ class UserService implements UserDetailsService {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
-    // Additional methods for stock management...
+    // Method to fetch the current stock price
+    public double getCurrentStockPrice(String stockSymbol) {
+        String url = "https://query1.finance.yahoo.com/v8/finance/chart/" + stockSymbol;
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JSONObject jsonResponse = new JSONObject(response.getBody());
+                return jsonResponse.getJSONObject("chart").getJSONArray("result").getJSONObject(0)
+                        .getJSONObject("meta").getDouble("regularMarketPrice");
+            }
+        } catch (Exception e) {
+            System.out.println("Error fetching stock price: " + e.getMessage());
+        }
+        throw new RuntimeException("Failed to fetch stock price for " + stockSymbol);
+    }
+
     public void addStock(String username, int quantity, String stockSymbol) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        double stockPrice = getCurrentStockPrice(stockSymbol);
+        double totalCost = stockPrice * quantity;
+
+        if (user.getBalance() < totalCost) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "not enough balance to purchase stock.");
+        }
+
+        user.setBalance(user.getBalance() - totalCost); // Deduct the balance for purchase
 
         String existingStonks = user.getStonks();
         StringBuilder updatedStonks = new StringBuilder();
@@ -143,6 +173,9 @@ class UserService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        double stockPrice = getCurrentStockPrice(stockSymbol);
+        double totalValue = stockPrice * quantity;
+
         String existingStonks = user.getStonks();
         StringBuilder updatedStonks = new StringBuilder();
 
@@ -156,7 +189,7 @@ class UserService implements UserDetailsService {
 
                 if (currentStockSymbol.equals(stockSymbol)) {
                     if (currentQuantity < quantity) {
-                        throw new RuntimeException("Not enough stock quantity to remove");
+                        throw new RuntimeException("not enough stock quantity to remove");
                     }
                     currentQuantity -= quantity;
                 }
@@ -170,8 +203,9 @@ class UserService implements UserDetailsService {
         if (updatedStonks.length() > 0) {
             updatedStonks.setLength(updatedStonks.length() - 1);
         }
-        
+
         user.setStonks(updatedStonks.toString());
+        user.setBalance(user.getBalance() + totalValue); // Add the balance for sale
         userRepository.save(user);
     }
 
@@ -245,13 +279,12 @@ class UserController {
         return "Registration failed!";
     }
 
-    @PostMapping("/login") // New endpoint for user login
+    @PostMapping("/login")
     @ResponseBody
     public String loginUser(@RequestBody UserLoginRequest request) {
         Optional<User> userOptional = userService.findByUsername(request.getUsername());
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            // Check if the password matches the stored encoded password
             if (userService.checkPassword(request.getPassword(), user.getPassword())) {
                 return "User logged in successfully!";
             }
@@ -261,14 +294,19 @@ class UserController {
 
     @PostMapping("/addStock")
     @ResponseBody
-    public String addStock(@RequestBody StockRequest request) {
+    public ResponseEntity<String> addStock(@RequestBody StockRequest request) {
         try {
             userService.addStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
-            return "Stock added successfully!";
+            return ResponseEntity.ok("Stock added successfully!");
+        } catch (ResponseStatusException e) {
+            // Use getStatusCode() to retrieve the HTTP status code
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         } catch (Exception e) {
-            return "An error occurred: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("An unexpected error occurred: " + e.getMessage());
         }
     }
+
 
     @PostMapping("/removeStock")
     @ResponseBody
