@@ -26,9 +26,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
-import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,7 +42,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class User {
+class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -74,9 +71,6 @@ interface UserRepository extends JpaRepository<User, Long> {
 class UserService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
-    
-    @Autowired
-    private QuestionJpaRepository questionJpaRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -127,6 +121,29 @@ class UserService implements UserDetailsService {
             System.out.println("Error fetching stock price: " + e.getMessage());
         }
         throw new RuntimeException("Failed to fetch stock price for " + stockSymbol);
+    }
+
+    // New method to calculate total portfolio value
+    public double calculatePortfolioValue(String username) {
+        User user = userRepository.findByUsername(username)
+                                  .orElseThrow(() -> new RuntimeException("User not found"));
+
+        double totalValue = user.getBalance();
+
+        if (user.getStonks() != null && !user.getStonks().isEmpty()) {
+            String[] stocks = user.getStonks().split(",");
+
+            for (String stock : stocks) {
+                String[] parts = stock.split("-");
+                int quantity = Integer.parseInt(parts[0]);
+                String stockSymbol = parts[1];
+                
+                double stockPrice = getCurrentStockPrice(stockSymbol);
+                totalValue += stockPrice * quantity;
+            }
+        }
+
+        return totalValue;
     }
 
     public void addStock(String username, int quantity, String stockSymbol) {
@@ -234,33 +251,6 @@ class UserService implements UserDetailsService {
 
         return stockList;
     }
-
-    public User updateBalance(long questionId, long answerId, long userId) {
-
-        // Fetch the question, answer, and user from the database
-        Optional<Question> questionOpt = questionJpaRepository.findById(questionId);
-        
-        Optional<User> userOpt = userRepository.findById(userId);
-    
-        // Check if the entities are present
-        if (questionOpt.isPresent() && userOpt.isPresent()) {
-            Question question = questionOpt.get();
-            
-            User user = userOpt.get();
-    
-            double questionPoints = question.getPoints();
-            
-            user.setBalance(user.getBalance() + questionPoints);
-    
-            userRepository.save(user);
-    
-            return user;
-        } else {
-            // Handle cases where any of the entities are not found
-            System.out.println("Question, Answer, or User not found.");
-            return null;
-        }
-    }
 }
 
 @Data
@@ -332,14 +322,12 @@ class UserController {
             userService.addStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
             return ResponseEntity.ok("Stock added successfully!");
         } catch (ResponseStatusException e) {
-            // Use getStatusCode() to retrieve the HTTP status code
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body("An unexpected error occurred: " + e.getMessage());
         }
     }
-
 
     @PostMapping("/removeStock")
     @ResponseBody
@@ -356,5 +344,17 @@ class UserController {
     @ResponseBody
     public List<UserStockInfo> getStocks(@RequestParam String username) {
         return userService.getUserStocks(username);
+    }
+
+    @GetMapping("/portfolioValue")
+    @ResponseBody
+    public ResponseEntity<Double> getPortfolioValue(@RequestParam String username) {
+        try {
+            double portfolioValue = userService.calculatePortfolioValue(username);
+            return ResponseEntity.ok(portfolioValue);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(null);
+        }
     }
 }
