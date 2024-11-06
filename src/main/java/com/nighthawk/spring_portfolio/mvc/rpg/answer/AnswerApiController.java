@@ -1,5 +1,10 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.answer;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,17 +15,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nighthawk.spring_portfolio.mvc.rpg.player.Player;
-import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerJpaRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.stocks.User;
+import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
-
-
 @RestController
 @RequestMapping("/rpg_answer")
 public class AnswerApiController {
+
+    // Load environment variables using dotenv
+    private final Dotenv dotenv = Dotenv.load();
+    private final String apiUrl = dotenv.get("API_URL");
+    private final String apiKey = dotenv.get("API_KEY");
 
     @Autowired
     private AnswerJpaRepository answerJpaRepository;
@@ -29,50 +40,104 @@ public class AnswerApiController {
     private QuestionJpaRepository questionJpaRepository;
 
     @Autowired
-    private PlayerJpaRepository playerJpaRepository;
+    private UserJpaRepository userJpaRepository;
+
     @Getter 
     public static class AnswerDto {
         private String content;
         private Long questionId;
-        private Long playerId;
+        private Long userId;
         private Long chatScore; 
     }
-
-
-    @PostMapping("/submitanswer") 
+    
+    @PostMapping("/submitAnswer")
     public ResponseEntity<Answer> postAnswer(@RequestBody AnswerDto answerDto) {
         Optional<Question> questionOpt = questionJpaRepository.findById(answerDto.getQuestionId());
-        Optional<Player> playerOpt = playerJpaRepository.findById(answerDto.getPlayerId());
+        Optional<User> userOpt = userJpaRepository.findById(answerDto.getUserId());
 
-        
+        System.out.println("API Key: " + apiKey);
+
+        if (questionOpt.isEmpty() || userOpt.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
         Question question = questionOpt.get();
-        Player player = playerOpt.get();
+        User user = userOpt.get();
 
-        Answer answer = new Answer(answerDto.getContent(), question, player, answerDto.getChatScore());
+        System.out.println(user);
+        System.out.println(question);
+
+        String rubric = "Provide a score from 1 to 10 evaluating the clarity, completeness, "
+                        + "and relevance of the following response in relation to the question asked:";
+
+        Long chatScore = getChatScore(answerDto.getContent(), rubric);
+
+        Answer answer = new Answer(answerDto.getContent(), question, user, chatScore);
         answerJpaRepository.save(answer);
-        
-        
+
+        // balance
+        double questionPoints = question.getPoints();
+        user.setBalance(user.getBalance() + questionPoints);
+        userJpaRepository.save(user);
+
         return new ResponseEntity<>(answer, HttpStatus.OK);
     }
-
-    // @GetMapping("/leaderboard") 
-    // public ResponseEntity<List<Player>> getLeaderboard() {
-
-        // int badgeCount = answerJpaRepository.countByPlayer(player);
-        /* Leaderboard:
-        - Rank(1/2/3/4)
-        - Player(Randall)
-        - Points(1,000,000)
-        - Questions Answered(12)
-        - Badge Count(12)
-        - Class(CSA, CSP, CSSE)
-        - Average Chat Score(1-1000, 1000 being highest rating)
-         */
-
-        // Nice feature: for each question, can view the player with the highest chatScore
-        // Able to view their answer 
-        // return new ResponseEntity<>(leaderboard, HttpStatus.OK);
-    //}
-
+    private Long getChatScore(String content, String rubric) {
+        try {
+            String requestBody = "{ \"model\": \"gpt-3.5-turbo\", \"messages\": ["
+                                 + "{\"role\": \"system\", \"content\": \"" + rubric + "\"},"
+                                 + "{\"role\": \"user\", \"content\": \"" + content + "\"} ] }";
     
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+    
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    
+            System.out.println("Response Code: " + response.statusCode());
+            System.out.println("Response Body: " + response.body());
+    
+            if (response.statusCode() == HttpStatus.OK.value()) {
+                return parseScoreFromResponse(response.body());
+            } else {
+                // Log error response
+                System.out.println("Error: " + response.body());
+                return 0L; 
+            }
+    
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace(); 
+            return 0L;  
+        }
+    }
+
+        
+
+    private Long parseScoreFromResponse(String responseBody) {
+        try {
+            // Create an ObjectMapper instance
+            ObjectMapper objectMapper = new ObjectMapper();
+        
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            
+            String content = rootNode.path("choices").get(0).path("message").path("content").asText();
+
+            if (content.contains("relevant")) {
+                return 10L;
+            } else if (content.contains("clarification")) {
+                return 8L;
+            } else {
+                return 5L;
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0L;
+        }
+    }
+
 }

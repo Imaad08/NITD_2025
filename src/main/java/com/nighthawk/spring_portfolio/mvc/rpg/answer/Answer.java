@@ -4,7 +4,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.nighthawk.spring_portfolio.mvc.rpg.player.Player;
+import com.nighthawk.spring_portfolio.mvc.stocks.User;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 
 import jakarta.persistence.Entity;
@@ -37,18 +37,18 @@ public class Answer {
     private Question question;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "playerId", nullable = false)
+    @JoinColumn(name = "userId", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
-    private Player player;
+    private User user;
 
     // add date
     private Long chatScore;
 
-    public Answer (String content, Question question, Player player, Long chatScore) {
+    public Answer (String content, Question question, User user, Long chatScore) {
         this.content = content;
         this.question = question;
-        this.player = player;
+        this.user = user;
         this.chatScore = chatScore;
     }
 
