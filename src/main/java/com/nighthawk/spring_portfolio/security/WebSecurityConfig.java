@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.nighthawk.spring_portfolio.mvc.person.PersonDetailsService;
 
+
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
