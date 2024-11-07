@@ -26,6 +26,7 @@ import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.stocks.User;
 import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.rpg.answer.LeaderboardDto;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
