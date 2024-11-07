@@ -24,10 +24,10 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = false, nullable = false)
     private String title;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = false, nullable = false)
     private String content;
 
     @Column(nullable = false)
@@ -71,6 +71,11 @@ public class Question {
         
         // byte[] badgeIcon = loadImageAsByteArray("path/to/your/image.png");
         questions.add(createQuestion("Unit 1 Popcorn Hack 1", "What is the output of the following code cell?", 10000));
+        questions.add(createQuestion("Unit 1 Popcorn Hack 2", "What is?", 10000));
+        questions.add(createQuestion("Unit 1 Popcorn Hack 3", "What is the ", 10000));
+        questions.add(createQuestion("Unit 2 Popcorn Hack 1", "What is the output ", 10000));
+        questions.add(createQuestion("Unit 2 Popcorn Hack 1", "What is the output of ", 10000));
+
         return questions.toArray(new Question[0]);
     }
 }

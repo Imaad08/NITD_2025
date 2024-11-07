@@ -5,12 +5,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +24,8 @@ import com.nighthawk.spring_portfolio.mvc.rpg.player.Player;
 import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.stocks.User;
+import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
@@ -43,6 +47,8 @@ public class AnswerApiController {
     @Autowired
     private PlayerJpaRepository playerJpaRepository;
 
+    @Autowired
+    private UserJpaRepository userJpaRepository;
     
 
 
@@ -56,10 +62,31 @@ public class AnswerApiController {
         private Long playerId;
         private Long chatScore; 
     }
-@GetMapping("/test")
-public ResponseEntity<String> testEndpoint() {
-    return new ResponseEntity<>("Endpoint is reachable", HttpStatus.OK);
-}
+
+
+    @GetMapping("/getChatScore/{playerid}")
+    public ResponseEntity<Long> getChatScore(@PathVariable Integer playerid) {
+        List<Answer> playeranswers = answerJpaRepository.findByPlayerId(playerid);
+        Long totalChatScore = 0L;
+
+        for (Answer playeranswer : playeranswers) {
+            Long questionChatScore = playeranswer.getChatScore();
+            totalChatScore += questionChatScore;
+        }
+
+        return new ResponseEntity<>(totalChatScore, HttpStatus.OK);
+
+    }
+
+    @GetMapping("/getBalance/{playerid}") 
+    public ResponseEntity<Double> getBalance(@PathVariable Integer playerid) {
+        User userOpt = userJpaRepository.findById(1);
+        
+        Double balance = userOpt.getBalance();
+
+        return new ResponseEntity<>(balance, HttpStatus.OK);
+
+    }
 
     @PostMapping("/submitAnswer")
     public ResponseEntity<Answer> postAnswer(@RequestBody AnswerDto answerDto) {
@@ -145,5 +172,7 @@ public ResponseEntity<String> testEndpoint() {
             return 0L;
         }
     }
+
+
 
 }
