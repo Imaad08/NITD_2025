@@ -44,6 +44,7 @@ public class PlayerApiController {
     @Autowired
     private PlayerDetailsService playerDetailsService;
     
+    
 
     /**
      * Retrieves a Player entity by current user of JWT token.
@@ -156,4 +157,6 @@ public class PlayerApiController {
 
     }
     */
+
+
 }

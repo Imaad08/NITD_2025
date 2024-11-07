@@ -30,10 +30,6 @@ public class Question {
     @Column(unique = true, nullable = false)
     private String content;
 
-    // Define the relationship between Question and Badge
-    @Column(unique = true, nullable = false)    
-    private String badge_name;
-
     @Column(nullable = false)
     private int points;
 
@@ -44,10 +40,9 @@ public class Question {
     */
 
     // Constructor
-    public Question(String title, String content, String badge_name, int points) {
+    public Question(String title, String content, int points) {
         this.title = title;
         this.content = content;
-        this.badge_name = badge_name;
         this.points = points;
     }
 
@@ -62,11 +57,10 @@ public class Question {
         }
     }
     */
-    public static Question createQuestion(String title, String content, String badge_name, int points) {
+    public static Question createQuestion(String title, String content, int points) {
         Question question = new Question();
         question.setTitle(title);
         question.setContent(content);
-        question.setBadge_name(badge_name);
         question.setPoints(points);
 
         return question;
@@ -76,7 +70,7 @@ public class Question {
         ArrayList<Question> questions = new ArrayList<>();
         
         // byte[] badgeIcon = loadImageAsByteArray("path/to/your/image.png");
-        questions.add(createQuestion("Unit 1 Popcorn Hack 1", "What is the output of the following code cell?", "Achievement 1", 10000));
+        questions.add(createQuestion("Unit 1 Popcorn Hack 1", "What is the output of the following code cell?", 10000));
         return questions.toArray(new Question[0]);
     }
 }

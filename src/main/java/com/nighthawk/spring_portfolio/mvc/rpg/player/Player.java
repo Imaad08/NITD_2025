@@ -59,6 +59,7 @@ public class Player {
     @ManyToMany(fetch = EAGER)
     private Collection<PlayerCsClass> csclasses = new ArrayList<>();
 
+    
     /** email, password, roles are key attributes to login and authentication
      * --- @NotEmpty annotation is used to validate that the annotated field is not null or empty, meaning it has to have a value.
      * --- @Size annotation is used to validate that the annotated field is between the specified boundaries, in this case greater than 5.
