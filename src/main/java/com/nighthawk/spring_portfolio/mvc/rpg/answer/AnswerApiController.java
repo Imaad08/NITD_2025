@@ -173,6 +173,20 @@ public class AnswerApiController {
         }
     }
 
+    @GetMapping("/leaderboard")
+    public List<LeaderboardDto> getLeaderboard() {
+    // Directly get List<LeaderboardDto> from repository without casting to Object[]
+    List<LeaderboardDto> leaderboardEntries = answerJpaRepository.findTop10PlayersByTotalScore();
+
+    // Loop to populate player names if needed
+    for (LeaderboardDto entry : leaderboardEntries) {
+        Optional<Player> player = playerJpaRepository.findById(entry.getId());
+        String playerName = player.isPresent() ? player.get().getName() : "Unknown";
+        entry.setPlayerName(playerName);
+    }
+
+    return leaderboardEntries;
+}
 
 
 }
