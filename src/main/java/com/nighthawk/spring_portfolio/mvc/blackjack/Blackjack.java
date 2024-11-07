@@ -1,14 +1,11 @@
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
-import com.nighthawk.spring_portfolio.mvc.person.Person;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nighthawk.spring_portfolio.mvc.stocks.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,13 +14,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.Transient;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity
 public class Blackjack {
     @Id
@@ -31,45 +23,85 @@ public class Blackjack {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "person_id")
-    private Person person;
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    private int betAmount;
-    private String gameStatus;
-    private String status = "ACTIVE"; // game status traxker
+    private String status;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Map<String, Object> gameState = new HashMap<>();
+    @Column(columnDefinition = "TEXT")
+    private String gameState;
 
-    public Blackjack(Person person, int betAmount) {
-        this.person = person;
+    @Column(nullable = false)  // Ensures betAmount cannot be null in the database
+    private double betAmount;  // New field for storing the bet amount
+
+    @Transient
+    private Map<String, Object> gameStateMap = new HashMap<>();
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getGameState() {
+        return gameState;
+    }
+
+    public void setGameState(String gameState) {
+        this.gameState = gameState;
+        this.gameStateMap = fromJsonString(gameState);
+    }
+
+    public double getBetAmount() {  // Getter for betAmount
+        return betAmount;
+    }
+
+    public void setBetAmount(double betAmount) {  // Setter for betAmount
         this.betAmount = betAmount;
-        this.gameStatus = "IN_PROGRESS";
-        initializeGame();
     }
 
-    private void initializeGame() {
-        List<String> playerHand = new ArrayList<>();
-        List<String> dealerHand = new ArrayList<>();
-        
-        gameState.put("playerHand", playerHand);
-        gameState.put("dealerHand", dealerHand);
-        gameState.put("playerScore", 0);
-        gameState.put("dealerScore", 0);
-        gameState.put("deck", initializeDeck());
+    public Map<String, Object> getGameStateMap() {
+        return gameStateMap;
     }
 
-    private List<String> initializeDeck() {
-        List<String> deck = new ArrayList<>();
-        String[] suits = {"Hearts", "Diamonds", "Clubs", "Spades"};
-        String[] ranks = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
-        
-        for (String suit : suits) {
-            for (String rank : ranks) {
-                deck.add(rank + " of " + suit);
-            }
+    public void setGameStateMap(Map<String, Object> gameStateMap) {
+        this.gameStateMap = gameStateMap;
+        this.gameState = toJsonString(gameStateMap);
+    }
+
+    private String toJsonString(Map<String, Object> map) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to convert map to JSON string", e);
         }
-        return deck;
+    }
+
+    private Map<String, Object> fromJsonString(String json) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(json, HashMap.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to convert JSON string to map", e);
+        }
     }
 }
