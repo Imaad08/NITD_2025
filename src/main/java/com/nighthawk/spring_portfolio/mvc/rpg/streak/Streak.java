@@ -26,7 +26,7 @@ public class Streak {
 
     /** Automatic unique identifier for Streak record
      * --- @Id annotation specifies the identifier property of the entity.
-     * --- @GeneratedVlue annotation specifies the primary key generation strategy.
+     * --- @GeneratedValue annotation specifies the primary key generation strategy.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -53,44 +53,22 @@ public class Streak {
     @Column(nullable = false, columnDefinition = "int default 0")
     private int maxStreak;
 
-    /** lastInteractionDate records the last date the user interacted
-     * --- @Column annotation ensures that it is stored as a date type and not null.
-     */
-    @NotNull
-    @Column(nullable = false)
-    private String lastInteractionDate;
-
-    /** lastResetDate records the last date the streak was reset
-     * --- @Column annotation ensures that it is stored as a date type.
-     */
-    @Column
-    private String lastResetDate;
-
     /** Custom constructor for creating a Streak object with specific details */
-    public Streak(Long userId, int currentStreak, int maxStreak, String lastInteractionDate, String lastResetDate) {
+    public Streak(Long userId, int currentStreak, int maxStreak) {
         this.userId = userId;
         this.currentStreak = currentStreak;
         this.maxStreak = maxStreak;
-        this.lastInteractionDate = lastInteractionDate;
-        this.lastResetDate = lastResetDate;
     }
 
     /** Static method to create a new Streak instance */
-    public static Streak createStreak(Long userId, int currentStreak, int maxStreak, String lastInteractionDate, String lastResetDate) {
-        Streak streak = new Streak();
-        streak.setUserId(userId);
-        streak.setCurrentStreak(currentStreak);
-        streak.setMaxStreak(maxStreak);
-        streak.setLastInteractionDate(lastInteractionDate);
-        streak.setLastResetDate(lastResetDate);
-
-        return streak;
+    public static Streak createStreak(Long userId, int currentStreak, int maxStreak) {
+        return new Streak(userId, currentStreak, maxStreak);
     }
 
     /** Static method to initialize an array of Streak objects for testing */
     public static Streak[] init() {
         ArrayList<Streak> streaks = new ArrayList<>();
-        streaks.add(createStreak(1L, 5, 10, "2024-10-30", "2024-10-15"));
+        streaks.add(createStreak(1L, 5, 10));
         return streaks.toArray(new Streak[0]);
     }
 }
