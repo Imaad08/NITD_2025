@@ -63,7 +63,7 @@ public class AnswerApiController {
     }
 
 
-    @GetMapping("/getChatScore/{playerid}")
+    @GetMapping("/getChatScore/{userid}")
     public ResponseEntity<Long> getChatScore(@PathVariable Integer userid) {
         List<Answer> useranswers = answerJpaRepository.findByUserId(userid);
         Long totalChatScore = 0L;
@@ -77,7 +77,7 @@ public class AnswerApiController {
 
     }
 
-    @GetMapping("/getBalance/{playerid}") 
+    @GetMapping("/getBalance/{userid}") 
     public ResponseEntity<Double> getBalance(@PathVariable Integer userid) {
         User userOpt = userJpaRepository.findById(userid);
         
