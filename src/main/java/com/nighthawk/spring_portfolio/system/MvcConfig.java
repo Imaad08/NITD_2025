@@ -1,10 +1,14 @@
 package com.nighthawk.spring_portfolio.system;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.context.annotation.*;
-import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class MvcConfig implements WebMvcConfigurer {
@@ -31,7 +35,7 @@ public class MvcConfig implements WebMvcConfigurer {
     
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
-        registry.addMapping("/**").allowedOrigins("https://spring2025.nighthawkcodingsociety.com", "https://nighthawkcoders.github.io", "http://127.0.0.1:4100", "http://localhost:4100");
+        registry.addMapping("/**").allowedOrigins("https://spring2025.nighthawkcodingsociety.com", "https://nighthawkcoders.github.io", "http://127.0.0.1:4100", "http://localhost:4100", "http://127.0.0.1:5500");
     }
     
 }

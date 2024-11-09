@@ -20,13 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nighthawk.spring_portfolio.mvc.rpg.player.Player;
 import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.stocks.User;
 import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.rpg.answer.LeaderboardDto;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
@@ -60,18 +58,18 @@ public class AnswerApiController {
     public static class AnswerDto {
         private String content;
         private Long questionId;
-        private Long playerId;
+        private Long userId;
         private Long chatScore; 
     }
 
 
     @GetMapping("/getChatScore/{playerid}")
-    public ResponseEntity<Long> getChatScore(@PathVariable Integer playerid) {
-        List<Answer> playeranswers = answerJpaRepository.findByPlayerId(playerid);
+    public ResponseEntity<Long> getChatScore(@PathVariable Integer userid) {
+        List<Answer> useranswers = answerJpaRepository.findByUserId(userid);
         Long totalChatScore = 0L;
 
-        for (Answer playeranswer : playeranswers) {
-            Long questionChatScore = playeranswer.getChatScore();
+        for (Answer useranswer : useranswers) {
+            Long questionChatScore = useranswer.getChatScore();
             totalChatScore += questionChatScore;
         }
 
@@ -80,8 +78,8 @@ public class AnswerApiController {
     }
 
     @GetMapping("/getBalance/{playerid}") 
-    public ResponseEntity<Double> getBalance(@PathVariable Integer playerid) {
-        User userOpt = userJpaRepository.findById(1);
+    public ResponseEntity<Double> getBalance(@PathVariable Integer userid) {
+        User userOpt = userJpaRepository.findById(userid);
         
         Double balance = userOpt.getBalance();
 
@@ -92,18 +90,18 @@ public class AnswerApiController {
     @PostMapping("/submitAnswer")
     public ResponseEntity<Answer> postAnswer(@RequestBody AnswerDto answerDto) {
         Optional<Question> questionOpt = questionJpaRepository.findById(answerDto.getQuestionId());
-        Optional<Player> playerOpt = playerJpaRepository.findById(answerDto.getPlayerId());
+        Optional<User> userOpt = userJpaRepository.findById(answerDto.getUserId());
 
         System.out.println("API Key: " + apiKey);
 
-        if (questionOpt.isEmpty() || playerOpt.isEmpty()) {
+        if (questionOpt.isEmpty() || userOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         Question question = questionOpt.get();
-        Player player = playerOpt.get();
+        User user = userOpt.get();
 
-        System.out.println(player);
+        System.out.println(user);
         System.out.println(question);
 
         String rubric = "Provide a score from 1 to 10 evaluating the clarity, completeness, "
@@ -111,11 +109,17 @@ public class AnswerApiController {
 
         Long chatScore = getChatScore(answerDto.getContent(), rubric);
 
-        Answer answer = new Answer(answerDto.getContent(), question, player, chatScore);
+        Answer answer = new Answer(answerDto.getContent(), question, user, chatScore);
         answerJpaRepository.save(answer);
+
+        // updateBalance
+        double questionPoints = question.getPoints();
+        user.setBalance(user.getBalance() + questionPoints);
+        userJpaRepository.save(user);
 
         return new ResponseEntity<>(answer, HttpStatus.OK);
     }
+
     private Long getChatScore(String content, String rubric) {
         try {
             String requestBody = "{ \"model\": \"gpt-3.5-turbo\", \"messages\": ["
@@ -174,6 +178,7 @@ public class AnswerApiController {
         }
     }
 
+    /*
     @GetMapping("/leaderboard")
     public List<LeaderboardDto> getLeaderboard() {
     // Directly get List<LeaderboardDto> from repository without casting to Object[]
@@ -188,6 +193,7 @@ public class AnswerApiController {
 
     return leaderboardEntries;
 }
+*/
 
 
 }

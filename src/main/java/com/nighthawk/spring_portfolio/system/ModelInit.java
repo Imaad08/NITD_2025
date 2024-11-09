@@ -26,7 +26,8 @@ import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerCsClassJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerDetailsService;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
-
+import com.nighthawk.spring_portfolio.mvc.stocks.User;
+import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
 
 @Component
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
@@ -38,8 +39,8 @@ public class ModelInit {
 
     @Autowired PlayerCsClassJpaRepository csclassJpaRepository;
     @Autowired PlayerDetailsService playerDetailsService;
-
-
+    @Autowired UserJpaRepository userJpaRepository;
+    
     @Autowired AnnouncementJPA announcementJPA;
 
     @Autowired QuestionJpaRepository questionJpaRepository;
@@ -67,6 +68,13 @@ public class ModelInit {
                     jokesRepo.save(new Jokes(null, joke, 0, 0)); //JPA save
             }
 
+            User[] userArray = User.init();
+            for (User user : userArray) {
+                User userFound = userJpaRepository.findByUsername(user.getUsername());
+                if (userFound == null) {
+                    userJpaRepository.save(new User(user.getUsername(), user.getPassword(), user.getRole(), user.isEnabled(), user.getBalance(), user.getStonks()));
+                }
+            }
 
 
             // Initialize questions with the fetched badges
