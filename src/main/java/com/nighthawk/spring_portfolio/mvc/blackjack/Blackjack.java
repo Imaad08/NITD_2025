@@ -67,19 +67,24 @@ public class Blackjack {
         int score = 0;
         int aces = 0;
         for (String card : hand) {
-            String rank = card.substring(0, card.length() - 1);
+            String rank = card.substring(0, card.length() - 1); // Get rank only, ignoring suit
             switch (rank) {
-                case "A" -> { aces++; score += 11; }
-                case "K", "Q", "J" -> score += 10;
-                default -> score += Integer.parseInt(rank);
+                case "A" -> { 
+                    aces++; 
+                    score += 11; // Initially count Ace as 11
+                }
+                case "K", "Q", "J" -> score += 10; // Face cards count as 10
+                default -> score += Integer.parseInt(rank); // Number cards
             }
         }
+        // Adjust for Aces if score exceeds 21
         while (score > 21 && aces > 0) {
             score -= 10;
             aces--;
         }
         return score;
     }
+    
 
     private List<String> generateDeck() {
         String[] suits = {"H", "D", "C", "S"};
