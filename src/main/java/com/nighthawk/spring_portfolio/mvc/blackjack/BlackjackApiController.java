@@ -1,5 +1,6 @@
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +30,13 @@ public class BlackjackApiController {
     @Autowired
     private UserJpaRepository userJpaRepository;
 
+    // Helper method to return a JSON response
+    private ResponseEntity<Object> jsonResponse(String message) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/start")
     public ResponseEntity<Blackjack> startGame(@RequestBody Map<String, Object> request) {
         try {
@@ -57,18 +65,17 @@ public class BlackjackApiController {
             int playerScore = (int) gameState.get("playerScore");
             int dealerScore = (int) gameState.get("dealerScore");
 
-            LOGGER.info("Game started for user: " + username);
-            LOGGER.info("Player hand: " + playerHand + " (Score: " + playerScore + ")");
-            LOGGER.info("Dealer hand: " + dealerHand + " (Score: " + dealerScore + ")");
+            LOGGER.info(String.format("Game started for user: %s", username));
+            LOGGER.info(String.format("Player hand: %s (Score: %d)", playerHand, playerScore));
+            LOGGER.info(String.format("Dealer hand: %s (Score: %d)", dealerHand, dealerScore));
 
             repository.save(game);
             return new ResponseEntity<>(game, HttpStatus.OK);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error starting game", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR); // Ensure return type matches
         }
     }
-
 
     @PostMapping("/hit")
     public ResponseEntity<Object> hit(@RequestBody Map<String, Object> request) {
@@ -77,66 +84,57 @@ public class BlackjackApiController {
             Optional<User> optionalUser = userJpaRepository.findByUsername(username);
     
             if (optionalUser.isEmpty()) {
-                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+                return jsonResponse("User not found");
             }
     
             User user = optionalUser.get();
             Blackjack game = repository.findFirstByUserAndStatusOrderByIdDesc(user, "ACTIVE").orElse(null);
     
             if (game == null) {
-                return new ResponseEntity<>("No active game found for user", HttpStatus.NOT_FOUND);
+                return jsonResponse("No active game found for user");
             }
     
             game.loadGameState(); // Load game state to ensure deck is populated
             Map<String, Object> gameState = game.getGameStateMap();
-            
+    
             @SuppressWarnings("unchecked")
             List<String> playerHand = (List<String>) gameState.get("playerHand");
             @SuppressWarnings("unchecked")
             List<String> deck = (List<String>) gameState.get("deck");
     
             if (deck == null || deck.isEmpty()) {
-                return new ResponseEntity<>("Game over: No cards left in deck", HttpStatus.BAD_REQUEST);
+                return jsonResponse("Game over: No cards left in deck");
             }
     
-            // Check if player already busted
-            int playerScore = gameState.get("playerScore") != null ? ((Number) gameState.get("playerScore")).intValue() : 0;
-            if (playerScore > 21) {
-                return new ResponseEntity<>("Player already busted", HttpStatus.BAD_REQUEST);
-            }
-    
-            // Draw a card for the player and calculate the new score
             String drawnCard = deck.remove(0);
             playerHand.add(drawnCard);
-            playerScore = game.calculateScore(playerHand);
+            int playerScore = game.calculateScore(playerHand);
     
             gameState.put("playerHand", playerHand);
             gameState.put("deck", deck);
             gameState.put("playerScore", playerScore);
     
-            // Check if player busts after this hit
-            if (playerScore > 21) {
-                gameState.put("result", "LOSE");
-                game.setStatus("INACTIVE");
-                user.setBalance(user.getBalance() - game.getBetAmount());
-                game.setGameStateMap(gameState); // Persist updated game state and result
-                repository.save(game);
-                userJpaRepository.save(user); // Update user balance
-                return new ResponseEntity<>("Player busts! Game over.", HttpStatus.OK);
+            if (playerScore > 21) { // Player busts
+                double betAmount = game.getBetAmount();
+                user.setBalance(user.getBalance() - betAmount); // Deduct the bet amount from balance
+                game.setStatus("INACTIVE"); // Mark game as inactive
+                gameState.put("result", "LOSE"); // Set result as lose
+                game.setGameStateMap(gameState); // Persist the updated game state
+                repository.save(game); // Save game state
+                userJpaRepository.save(user); // Save user balance update
+                return jsonResponse("Player busts! Game over.");
             }
     
-            // Save game state if the player has not busted
-            game.setGameStateMap(gameState); // Persist updated game state
+            game.setGameStateMap(gameState);  // Persist the updated game state
             repository.save(game);
     
             return new ResponseEntity<>(game, HttpStatus.OK);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error processing hit", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(jsonResponse("Internal server error"));
         }
     }
     
-
     @PostMapping("/stand")
     public ResponseEntity<Object> stand(@RequestBody Map<String, Object> request) {
         try {
@@ -144,17 +142,17 @@ public class BlackjackApiController {
             Optional<User> optionalUser = userJpaRepository.findByUsername(username);
 
             if (optionalUser.isEmpty()) {
-                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+                return jsonResponse("User not found");
             }
 
             User user = optionalUser.get();
             Blackjack game = repository.findFirstByUserAndStatusOrderByIdDesc(user, "ACTIVE").orElse(null);
 
             if (game == null) {
-                return new ResponseEntity<>("No active game found for user", HttpStatus.NOT_FOUND);
+                return jsonResponse("No active game found for user");
             }
 
-            game.loadGameState(); // Load game state to ensure deck and hands are populated
+            game.loadGameState();
             Map<String, Object> gameState = game.getGameStateMap();
 
             @SuppressWarnings("unchecked")
@@ -164,23 +162,21 @@ public class BlackjackApiController {
 
             int playerScore = (int) gameState.get("playerScore");
             int dealerScore = (int) gameState.get("dealerScore");
+            double betAmount = game.getBetAmount();
 
-            // Dealer's turn: Reveal hidden card and draw until score is at least 17
+            // Dealer's turn: Dealer hits until reaching at least 17
             while (dealerScore < 17 && !deck.isEmpty()) {
                 String drawnCard = deck.remove(0);
                 dealerHand.add(drawnCard);
                 dealerScore = game.calculateScore(dealerHand);
             }
 
-            // Update game state with dealer's final score
             gameState.put("dealerScore", dealerScore);
             gameState.put("dealerHand", dealerHand);
             gameState.put("deck", deck);
 
-            // Determine outcome
+            // Determine outcome and update balance
             String result;
-            double betAmount = game.getBetAmount();
-
             if (playerScore > 21) {
                 result = "LOSE";
                 user.setBalance(user.getBalance() - betAmount);
@@ -191,19 +187,19 @@ public class BlackjackApiController {
                 result = "LOSE";
                 user.setBalance(user.getBalance() - betAmount);
             } else {
-                result = "DRAW"; // In case of a tie, no balance change
+                result = "DRAW"; // No balance change on draw
             }
 
             gameState.put("result", result);
             game.setStatus("INACTIVE");
             game.setGameStateMap(gameState);
             repository.save(game);
-            userJpaRepository.save(user); // Save the updated user balance
+            userJpaRepository.save(user); // Ensure balance is saved
 
             return new ResponseEntity<>(game, HttpStatus.OK);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error processing stand", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(jsonResponse("Internal server error"));
         }
     }
     }
