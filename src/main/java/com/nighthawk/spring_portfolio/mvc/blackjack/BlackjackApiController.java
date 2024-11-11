@@ -103,65 +103,74 @@ public class BlackjackApiController {
         }
     }
 
-    @PostMapping("/stand")
-    public ResponseEntity<Object> stand(@RequestBody Map<String, Object> request) {
-        try {
-            String username = request.get("username").toString();
-            Optional<User> optionalUser = userJpaRepository.findByUsername(username);
+@PostMapping("/stand")
+public ResponseEntity<Object> stand(@RequestBody Map<String, Object> request) {
+    try {
+        String username = request.get("username").toString();
+        Optional<User> optionalUser = userJpaRepository.findByUsername(username);
 
-            if (optionalUser.isEmpty()) {
-                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-            }
-
-            User user = optionalUser.get();
-            Blackjack game = repository.findFirstByUserAndStatusOrderByIdDesc(user, "ACTIVE").orElse(null);
-
-            if (game == null) {
-                return new ResponseEntity<>("No active game found for user", HttpStatus.NOT_FOUND);
-            }
-
-            game.loadGameState(); // Ensure game state is loaded
-            Map<String, Object> gameState = game.getGameStateMap();
-            
-            @SuppressWarnings("unchecked")
-            List<String> dealerHand = (List<String>) gameState.get("dealerHand");
-            @SuppressWarnings("unchecked")
-            List<String> deck = (List<String>) gameState.get("deck");
-
-            int playerScore = gameState.get("playerScore") != null ? ((Number) gameState.get("playerScore")).intValue() : 0;
-            int dealerScore = gameState.get("dealerScore") != null ? ((Number) gameState.get("dealerScore")).intValue() : 0;
-            double betAmount = game.getBetAmount();
-
-            // Dealer’s turn logic
-            while (dealerScore < 17 && deck != null && !deck.isEmpty()) {
-                String drawnCard = deck.remove(0);
-                dealerHand.add(drawnCard);
-                dealerScore = game.calculateScore(dealerHand);
-            }
-
-            gameState.put("dealerScore", dealerScore);
-            gameState.put("dealerHand", dealerHand);
-            gameState.put("deck", deck);
-
-            // Determine outcome
-            if (playerScore > dealerScore && playerScore <= 21) {
-                user.setBalance(user.getBalance() + betAmount);
-                gameState.put("result", "WIN");
-            } else {
-                user.setBalance(user.getBalance() - betAmount);
-                gameState.put("result", "LOSE");
-            }
-
-            game.setStatus("INACTIVE");
-            game.setGameStateMap(gameState);
-            repository.save(game);
-            userJpaRepository.save(user);
-
-            return new ResponseEntity<>(game, HttpStatus.OK);
-
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error processing stand", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        if (optionalUser.isEmpty()) {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
+
+        User user = optionalUser.get();
+        Blackjack game = repository.findFirstByUserAndStatusOrderByIdDesc(user, "ACTIVE").orElse(null);
+
+        if (game == null) {
+            return new ResponseEntity<>("No active game found for user", HttpStatus.NOT_FOUND);
+        }
+
+        game.loadGameState();
+        Map<String, Object> gameState = game.getGameStateMap();
+
+        @SuppressWarnings("unchecked")
+        List<String> dealerHand = (List<String>) gameState.get("dealerHand");
+        @SuppressWarnings("unchecked")
+        List<String> deck = (List<String>) gameState.get("deck");
+
+        int playerScore = gameState.get("playerScore") != null ? ((Number) gameState.get("playerScore")).intValue() : 0;
+        int dealerScore = gameState.get("dealerScore") != null ? ((Number) gameState.get("dealerScore")).intValue() : 0;
+        double betAmount = game.getBetAmount();
+
+        // Dealer’s turn logic
+        while (dealerScore < 17 && deck != null && !deck.isEmpty()) {
+            String drawnCard = deck.remove(0);
+            dealerHand.add(drawnCard);
+            dealerScore = game.calculateScore(dealerHand);
+        }
+
+        gameState.put("dealerScore", dealerScore);
+        gameState.put("dealerHand", dealerHand);
+        gameState.put("deck", deck);
+
+        // Determine outcome and adjust balance
+        String result;
+        if (playerScore > 21) {
+            result = "LOSE";
+            user.setBalance(user.getBalance() - betAmount);
+        } else if (dealerScore > 21 || playerScore > dealerScore) {
+            result = "WIN";
+            user.setBalance(user.getBalance() + betAmount);
+        } else if (playerScore < dealerScore) {
+            result = "LOSE";
+            user.setBalance(user.getBalance() - betAmount);
+        } else {
+            result = "DRAW";
+            // Balance remains the same on a draw
+        }
+
+        // Save game result and user balance
+        gameState.put("result", result);
+        game.setStatus("INACTIVE");
+        game.setGameStateMap(gameState);
+        repository.save(game);
+        userJpaRepository.save(user);  // Save updated balance
+
+        return new ResponseEntity<>(game, HttpStatus.OK);
+
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Error processing stand", e);
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
+}
 }
