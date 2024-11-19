@@ -5,13 +5,10 @@ public class LeaderboardDto {
     private String playerName;
     private Long totalScore;
 
-    // Constructor matching the query result
     public LeaderboardDto(Long id, Long totalScore) {
         this.id = id;
         this.totalScore = totalScore;
     }
-
-    // Getters and setters remain the same
 
     public Long getId() {
         return id;
