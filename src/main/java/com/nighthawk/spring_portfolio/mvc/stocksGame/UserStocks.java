@@ -1,3 +1,4 @@
+package com.nighthawk.spring_portfolio.mvc.stocksGame;
 // package com.nighthawk.spring_portfolio.mvc.stocks;
 
 // import jakarta.persistence.Column;
