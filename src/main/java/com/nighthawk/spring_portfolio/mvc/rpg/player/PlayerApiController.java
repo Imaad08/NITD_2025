@@ -20,35 +20,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.Getter;
 
-
-/**
- * This class provides RESTful API endpoints for managing Player entities.
- * It includes endpoints for creating, retrieving, updating, and deleting Player entities.
- */
 @RestController
 @RequestMapping("/rpg_player")
 public class PlayerApiController {
-    /*
-    #### RESTful API REFERENCE ####
-    Resource: https://spring.io/guides/gs/rest-service/
-    */
 
-    /**
-     * Repository for accessing Player entities in the database.
-     */
     @Autowired
+
     private PlayerJpaRepository playerJpaRepository;
-    /**
-     * Service for managing Player entities.
-     */
     @Autowired
     private PlayerDetailsService playerDetailsService;
     
-
-    /**
-     * Retrieves a Player entity by current user of JWT token.
-     * @return A ResponseEntity containing the Player entity if found, or a NOT_FOUND status if not found.
-     */
     @GetMapping("/player")
     public ResponseEntity<Player> getPlayer(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -64,22 +45,12 @@ public class PlayerApiController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-    
-    /**
-     * Retrieves all the Player entities in the database, people
-     * @return A ResponseEntity containing a list for Player entities 
-     */
+
     @GetMapping("/players")
     public ResponseEntity<List<Player>> getPlayers() {
         return new ResponseEntity<>( playerJpaRepository.findAllByOrderByNameAsc(), HttpStatus.OK);
     }
 
-    /**
-     * Retrieves a Player entity by its ID.
-     *
-     * @param id The ID of the Player entity to retrieve.
-     * @return A ResponseEntity containing the Player entity if found, or a NOT_FOUND status if not found.
-     */
     @GetMapping("/player/{id}")
     public ResponseEntity<Player> getPlayer(@PathVariable long id) {
         Optional<Player> optional = playerJpaRepository.findById(id);
@@ -90,13 +61,6 @@ public class PlayerApiController {
         // Bad ID
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);       
     }
-
-    /**
-     * Delete a Player entity by its ID.
-     *
-     * @param id The ID of the Player entity to delete.
-     * @return A ResponseEntity containing the Player entity if deleted, or a NOT_FOUND status if not found.
-     */
     @DeleteMapping("/player/{id}")
     public ResponseEntity<Player> deletePlayer(@PathVariable long id) {
         Optional<Player> optional = playerJpaRepository.findById(id);
@@ -108,10 +72,7 @@ public class PlayerApiController {
         // Bad ID
         return new ResponseEntity<>(HttpStatus.NOT_FOUND); 
     }
-
-    /* DTO (Data Transfer Object) to support POST request for postPlayer method
-       .. represents the data in the request body
-     */
+    
     @Getter 
     public static class PlayerDto {
         private String email;
@@ -120,11 +81,6 @@ public class PlayerApiController {
         private List<PlayerCsClass> csClasses;
     }
 
-    /**
-     * Create a new Player entity.
-     * @param playerDto
-     * @return A ResponseEntity containing a success message if the Player entity is created, or a BAD_REQUEST status if not created.
-     */
     @PostMapping("/player")
     public ResponseEntity<Object> postPlayer(@RequestBody PlayerDto playerDto) {
         // Validate dob input
@@ -156,4 +112,6 @@ public class PlayerApiController {
 
     }
     */
+
+
 }

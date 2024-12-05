@@ -59,6 +59,7 @@ public class Player {
     @ManyToMany(fetch = EAGER)
     private Collection<PlayerCsClass> csclasses = new ArrayList<>();
 
+    
     /** email, password, roles are key attributes to login and authentication
      * --- @NotEmpty annotation is used to validate that the annotated field is not null or empty, meaning it has to have a value.
      * --- @Size annotation is used to validate that the annotated field is between the specified boundaries, in this case greater than 5.
@@ -128,6 +129,11 @@ public class Player {
         ArrayList<Player> players = new ArrayList<>();
         
         players.add(createPlayer("Saathvik Gampa", "sg@gmail.com", "123sg"));
+        players.add(createPlayer("Aidan Lau", "al@gmail.com", "123al"));
+        players.add(createPlayer("Tanav K", "tk@gmail.com", "123tk"));
+        players.add(createPlayer("Sri S", "ss@gmail.com", "123ss"));
+        players.add(createPlayer("Anika B", "ab@gmail.com", "123ab"));
+        players.add(createPlayer("Imaad M", "im@gmail.com", "123im"));
         return players.toArray(new Player[0]);
     }
     
