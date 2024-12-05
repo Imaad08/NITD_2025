@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nighthawk.spring_portfolio.mvc.rpg.player.Player;
 import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
@@ -178,13 +179,10 @@ public class AnswerApiController {
         }
     }
 
-    /*
     @GetMapping("/leaderboard")
     public List<LeaderboardDto> getLeaderboard() {
-    // Directly get List<LeaderboardDto> from repository without casting to Object[]
     List<LeaderboardDto> leaderboardEntries = answerJpaRepository.findTop10PlayersByTotalScore();
 
-    // Loop to populate player names if needed
     for (LeaderboardDto entry : leaderboardEntries) {
         Optional<Player> player = playerJpaRepository.findById(entry.getId());
         String playerName = player.isPresent() ? player.get().getName() : "Unknown";
@@ -192,8 +190,5 @@ public class AnswerApiController {
     }
 
     return leaderboardEntries;
-}
-*/
-
-
+    }  
 }
