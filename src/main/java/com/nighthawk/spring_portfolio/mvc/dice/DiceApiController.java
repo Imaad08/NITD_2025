@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nighthawk.spring_portfolio.mvc.stocks.User;
-import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.user.User;
+import com.nighthawk.spring_portfolio.mvc.user.UserJpaRepository;
 
 import lombok.Getter;
 

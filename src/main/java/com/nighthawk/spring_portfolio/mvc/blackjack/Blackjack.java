@@ -8,7 +8,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nighthawk.spring_portfolio.mvc.stocks.User;
+import com.nighthawk.spring_portfolio.mvc.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
