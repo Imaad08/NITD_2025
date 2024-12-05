@@ -1,4 +1,4 @@
-package com.nighthawk.spring_portfolio.mvc.stocks;
+package com.nighthawk.spring_portfolio.mvc.user;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,7 +14,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,52 +24,137 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
-import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+@Controller
+@RequestMapping("/user")
+public class UserApiController {
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/register")
+    @ResponseBody
+    public String registerUser(@RequestBody UserRegistrationRequest request) {
+        if (userService.registerUser(request.getUsername(), request.getPassword(), request.getBalance()) != null) {
+            return "User registered successfully!";
+        }
+        return "Registration failed!";
+    }
+
+    @PostMapping("/login")
+    @ResponseBody
+    public ResponseEntity<String> loginUser(@RequestBody UserLoginRequest request) {
+        if (request.getPassword() == null || request.getPassword().isEmpty()) {
+            return ResponseEntity.badRequest().body("Password cannot be empty!");
+        }
+    
+        Optional<User> userOptional = userService.findByUsername(request.getUsername());
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            // Verify password using password encoder
+            if (userService.checkPassword(request.getPassword(), user.getPassword())) {
+                // Redirect or inform frontend to redirect to /home
+                return ResponseEntity.ok("Redirecting to home");
+            }
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password!");
+    }
+        
+    @PostMapping("/addStock")
+    @ResponseBody
+    public ResponseEntity<String> addStock(@RequestBody StockRequest request) {
+        try {
+            userService.addStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
+            return ResponseEntity.ok("Stock added successfully!");
+        } catch (ResponseStatusException e) {
+            // Use getStatusCode() to retrieve the HTTP status code
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
+
+    @PostMapping("/removeStock")
+    @ResponseBody
+    public String removeStock(@RequestBody StockRequest request) {
+        try {
+            userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
+            return "Stock removed successfully!";
+        } catch (Exception e) {
+            return "An error occurred: " + e.getMessage();
+        }
+    }
+
+    @GetMapping("/getStocks")
+    @ResponseBody
+    public List<UserStockInfo> getStocks(@RequestParam String username) {
+        return userService.getUserStocks(username);
+    }
+    
+    @GetMapping("/portfolioValue")
+    @ResponseBody
+
+    public ResponseEntity<Double> getPortfolioValue(@RequestParam String username) {
+
+        try {
+
+            double portfolioValue = userService.calculatePortfolioValue(username);
+
+            return ResponseEntity.ok(portfolioValue);
+
+        } catch (Exception e) {
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+
+                                 .body(null);
+
+        }
+
+    }
+}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class UserStockInfo {
+    private String stockSymbol;
+    private int quantity;
+}
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @Column(unique = true, nullable = false)
+class UserRegistrationRequest {
     private String username;
-
-    @Column(nullable = false)
     private String password;
-
-    private String role = "USER";
-    private boolean enabled = true;
-    public double balance;
-    private String stonks;
-
+    private double balance;
 }
 
-@Repository
-interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class UserLoginRequest {
+    private String username;
+    private String password;
 }
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class StockRequest {
+    private String username;
+    private int quantity;
+    private String stockSymbol;
+}
 @Service
 class UserService implements UserDetailsService {
     @Autowired
-    private UserRepository userRepository;
+    private UserJpaRepository userRepository;
     
-    @Autowired
-    private QuestionJpaRepository questionJpaRepository;
+    //@Autowired
+    //private QuestionJpaRepository questionJpaRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -273,153 +356,30 @@ class UserService implements UserDetailsService {
         return stockList;
     }
 
-    public User updateBalance(long questionId, long answerId, long userId) {
+    // public User updateBalance(long questionId, long answerId, long userId) {
 
-        // Fetch the question, answer, and user from the database
-        Optional<Question> questionOpt = questionJpaRepository.findById(questionId);
+    //     // Fetch the question, answer, and user from the database
+    //     Optional<Question> questionOpt = questionJpaRepository.findById(questionId);
         
-        Optional<User> userOpt = userRepository.findById(userId);
+    //     Optional<User> userOpt = userRepository.findById(userId);
     
-        // Check if the entities are present
-        if (questionOpt.isPresent() && userOpt.isPresent()) {
-            Question question = questionOpt.get();
+    //     // Check if the entities are present
+    //     if (questionOpt.isPresent() && userOpt.isPresent()) {
+    //         Question question = questionOpt.get();
             
-            User user = userOpt.get();
+    //         User user = userOpt.get();
     
-            double questionPoints = question.getPoints();
+    //         double questionPoints = question.getPoints();
             
-            user.setBalance(user.getBalance() + questionPoints);
+    //         user.setBalance(user.getBalance() + questionPoints);
     
-            userRepository.save(user);
+    //         userRepository.save(user);
     
-            return user;
-        } else {
-            // Handle cases where any of the entities are not found
-            System.out.println("Question, Answer, or User not found.");
-            return null;
-        }
-    }
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class UserStockInfo {
-    private String stockSymbol;
-    private int quantity;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class UserRegistrationRequest {
-    private String username;
-    private String password;
-    private double balance;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class UserLoginRequest {
-    private String username;
-    private String password;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class StockRequest {
-    private String username;
-    private int quantity;
-    private String stockSymbol;
-}
-
-@Controller
-@RequestMapping("/user")
-class UserController {
-    @Autowired
-    private UserService userService;
-
-    @PostMapping("/register")
-    @ResponseBody
-    public String registerUser(@RequestBody UserRegistrationRequest request) {
-        if (userService.registerUser(request.getUsername(), request.getPassword(), request.getBalance()) != null) {
-            return "User registered successfully!";
-        }
-        return "Registration failed!";
-    }
-
-    @PostMapping("/login")
-    @ResponseBody
-    public ResponseEntity<String> loginUser(@RequestBody UserLoginRequest request) {
-        if (request.getPassword() == null || request.getPassword().isEmpty()) {
-            return ResponseEntity.badRequest().body("Password cannot be empty!");
-        }
-    
-        Optional<User> userOptional = userService.findByUsername(request.getUsername());
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            // Verify password using password encoder
-            if (userService.checkPassword(request.getPassword(), user.getPassword())) {
-                // Redirect or inform frontend to redirect to /home
-                return ResponseEntity.ok("Redirecting to home");
-            }
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password!");
-    }
-        
-    @PostMapping("/addStock")
-    @ResponseBody
-    public ResponseEntity<String> addStock(@RequestBody StockRequest request) {
-        try {
-            userService.addStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
-            return ResponseEntity.ok("Stock added successfully!");
-        } catch (ResponseStatusException e) {
-            // Use getStatusCode() to retrieve the HTTP status code
-            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body("An unexpected error occurred: " + e.getMessage());
-        }
-    }
-
-
-    @PostMapping("/removeStock")
-    @ResponseBody
-    public String removeStock(@RequestBody StockRequest request) {
-        try {
-            userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
-            return "Stock removed successfully!";
-        } catch (Exception e) {
-            return "An error occurred: " + e.getMessage();
-        }
-    }
-
-    @GetMapping("/getStocks")
-    @ResponseBody
-    public List<UserStockInfo> getStocks(@RequestParam String username) {
-        return userService.getUserStocks(username);
-    }
-    
-    @GetMapping("/portfolioValue")
-    @ResponseBody
-
-    public ResponseEntity<Double> getPortfolioValue(@RequestParam String username) {
-
-        try {
-
-            double portfolioValue = userService.calculatePortfolioValue(username);
-
-            return ResponseEntity.ok(portfolioValue);
-
-        } catch (Exception e) {
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-
-                                 .body(null);
-
-        }
-
-    }
+    //         return user;
+    //     } else {
+    //         // Handle cases where any of the entities are not found
+    //         System.out.println("Question, Answer, or User not found.");
+    //         return null;
+    //     }
+    // }
 }
