@@ -1,10 +1,6 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.answer;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nighthawk.spring_portfolio.mvc.rpg.player.Player;
-import com.nighthawk.spring_portfolio.mvc.rpg.player.PlayerJpaRepository;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.stocks.User;
@@ -29,6 +25,10 @@ import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 @RestController
 @RequestMapping("/rpg_answer")
 public class AnswerApiController {
@@ -43,9 +43,6 @@ public class AnswerApiController {
 
     @Autowired
     private QuestionJpaRepository questionJpaRepository;
-
-    @Autowired
-    private PlayerJpaRepository playerJpaRepository;
 
     @Autowired
     private UserJpaRepository userJpaRepository;
@@ -105,8 +102,19 @@ public class AnswerApiController {
         System.out.println(user);
         System.out.println(question);
 
-        String rubric = "Provide a score from 1 to 10 evaluating the clarity, completeness, "
-                        + "and relevance of the following response in relation to the question asked:";
+        String rubric = "Correctness and Completeness (500 points): 500 - completely correct, "
+                        + "450 - minor issues or unhandled edge cases, 400 - several small errors, "
+                        + "350 - partial with multiple issues, below 300 - major issues/incomplete; "
+                        + "Efficiency and Optimization (200 points): 200 - optimal or near-optimal, "
+                        + "180 - minor optimization needed, 160 - functional but inefficient, "
+                        + "140 - improvements needed, below 140 - inefficient; Code Structure and Organization "
+                        + "(150 points): 150 - well-organized, 130 - mostly organized, 110 - readable but lacks structure, "
+                        + "90 - hard to follow, below 90 - unorganized; Readability and Documentation (100 points): "
+                        + "100 - clear, well-documented, 85 - readable but limited comments, 70 - somewhat readable, "
+                        + "50 - minimally readable, below 50 - poor readability; Error Handling and Edge Cases "
+                        + "(50 points): 50 - handles all cases, 40 - most cases covered, 30 - some cases covered, "
+                        + "20 - minimal handling, below 20 - little attention; Extra Credit (100 points): "
+                        + "impressive/innovative elements. Give me an integer score from 1-1000 AND ONLY RESPOND WITH A NUMBER AND NO TEXT.";
 
         Long chatScore = getChatScore(answerDto.getContent(), rubric);
 
@@ -122,63 +130,49 @@ public class AnswerApiController {
     }
 
     private Long getChatScore(String content, String rubric) {
-        try {
-            String requestBody = "{ \"model\": \"gpt-3.5-turbo\", \"messages\": ["
-                                 + "{\"role\": \"system\", \"content\": \"" + rubric + "\"},"
-                                 + "{\"role\": \"user\", \"content\": \"" + content + "\"} ] }";
-    
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + apiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+        OkHttpClient client = new OkHttpClient();
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Construct JSON request body
+        ObjectNode requestBody = mapper.createObjectNode();
+        requestBody.put("model", "gpt-3.5-turbo");
+
+        // Construct messages array
+        ArrayNode messages = requestBody.putArray("messages");
+        ObjectNode systemMessage = messages.addObject();
+        systemMessage.put("role", "system");
+        systemMessage.put("content", rubric);
+
+        ObjectNode userMessage = messages.addObject();
+        userMessage.put("role", "user");
+        userMessage.put("content", content);
+
+        requestBody.put("temperature", 0.0);
+
+        // Create request
+        okhttp3.RequestBody body = okhttp3.RequestBody.create(requestBody.toString(), MediaType.get("application/json"));
+        Request request = new Request.Builder()
+                .url(apiUrl)
+                .post(body)
+                .addHeader("Authorization", "Bearer " + apiKey)
                 .build();
-    
-            HttpClient client = HttpClient.newHttpClient();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-    
-            System.out.println("Response Code: " + response.statusCode());
-            System.out.println("Response Body: " + response.body());
-    
-            if (response.statusCode() == HttpStatus.OK.value()) {
-                return parseScoreFromResponse(response.body());
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                System.out.println(response);
+                JsonNode jsonNode = mapper.readTree(response.body().string());
+                String chatGptResponse = jsonNode.get("choices").get(0).get("message").get("content").asText();
+                return Long.parseLong(chatGptResponse);
             } else {
-                // Log error response
-                System.out.println("Error: " + response.body());
-                return 0L; 
+                System.err.println("Request failed: " + response);
             }
-    
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace(); 
-            return 0L;  
-        }
-    }
-
-        
-
-    private Long parseScoreFromResponse(String responseBody) {
-        try {
-            // Create an ObjectMapper instance
-            ObjectMapper objectMapper = new ObjectMapper();
-        
-            JsonNode rootNode = objectMapper.readTree(responseBody);
-            
-            String content = rootNode.path("choices").get(0).path("message").path("content").asText();
-
-            if (content.contains("relevant")) {
-                return 10L;
-            } else if (content.contains("clarification")) {
-                return 8L;
-            } else {
-                return 5L;
-            }
-            
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
-            return 0L;
         }
+        return 0L;
     }
 
+/*
     @GetMapping("/leaderboard")
     public List<LeaderboardDto> getLeaderboard() {
     List<LeaderboardDto> leaderboardEntries = answerJpaRepository.findTop10PlayersByTotalScore();
@@ -191,4 +185,6 @@ public class AnswerApiController {
 
     return leaderboardEntries;
     }  
+}
+*/
 }

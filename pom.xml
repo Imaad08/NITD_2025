@@ -81,6 +81,11 @@
             <version>${nz.net.ultraq.thymeleaflayout-version}</version>
         </dependency>
         <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.10.0</version> <!-- Use the latest version if available -->
+        </dependency>
+        <dependency>
             <groupId>org.thymeleaf.extras</groupId>
             <artifactId>thymeleaf-extras-java8time</artifactId>
             <version>${thymeleaf-extras-java8time-version}</version>
@@ -187,6 +192,7 @@
 
             <version>20210307</version>
         </dependency>
+        
     </dependencies>
     <dependency>
     <groupId>io.github.cdimascio</groupId>

@@ -28,7 +28,8 @@ import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.stocks.User;
 import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
-
+import com.nighthawk.spring_portfolio.mvc.person.PersonUserMapping;
+import com.nighthawk.spring_portfolio.mvc.person.PersonUserMappingJpaRepository;
 @Component
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
 public class ModelInit {  
@@ -44,6 +45,7 @@ public class ModelInit {
     @Autowired AnnouncementJPA announcementJPA;
 
     @Autowired QuestionJpaRepository questionJpaRepository;
+    @Autowired PersonUserMappingJpaRepository personUserMappingJpaRepository;
 
     @Bean
     @Transactional
@@ -83,6 +85,15 @@ public class ModelInit {
                 Question questionFound = questionJpaRepository.findByTitle(question.getTitle());
                 if (questionFound == null) {
                     questionJpaRepository.save(new Question(question.getTitle(), question.getContent(), question.getPoints()));
+                }
+            }
+
+  
+            PersonUserMapping[] personusermappings = PersonUserMapping.init();
+            for (PersonUserMapping personusermapping : personusermappings) {
+                PersonUserMapping personusermappingFound = personUserMappingJpaRepository.findByUserId(personusermapping.getUserId());
+                if (personusermappingFound == null) {
+                    personUserMappingJpaRepository.save(new PersonUserMapping(personusermapping.getUserId(), personusermapping.getPersonId()));
                 }
             }
  
