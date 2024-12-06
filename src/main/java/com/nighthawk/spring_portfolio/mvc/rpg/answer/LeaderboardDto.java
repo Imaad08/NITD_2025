@@ -2,7 +2,7 @@ package com.nighthawk.spring_portfolio.mvc.rpg.answer;
 
 public class LeaderboardDto {
     private Long id;
-    private String playerName;
+    private String userName;
     private Long totalScore;
 
     public LeaderboardDto(Long id, Long totalScore) {
@@ -18,12 +18,12 @@ public class LeaderboardDto {
         this.id = id;
     }
 
-    public String getPlayerName() {
-        return playerName;
+    public String getuserName() {
+        return userName;
     }
 
-    public void setPlayerName(String playerName) {
-        this.playerName = playerName;
+    public void setuserName(String userName) {
+        this.userName = userName;
     }
 
     public Long getTotalScore() {

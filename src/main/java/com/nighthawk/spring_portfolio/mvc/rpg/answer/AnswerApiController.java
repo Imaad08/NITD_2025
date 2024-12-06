@@ -177,7 +177,7 @@ public class AnswerApiController {
     for (LeaderboardDto entry : leaderboardEntries) {
         Optional<User> user = userJpaRepository.findById(entry.getId());
         String playerName = user.isPresent() ? user.get().getUsername() : "Unknown";
-        entry.setPlayerName(playerName);
+        entry.setuserName(playerName);
     }
 
     return leaderboardEntries;
