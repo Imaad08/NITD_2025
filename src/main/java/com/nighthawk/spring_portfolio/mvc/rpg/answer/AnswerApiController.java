@@ -1,4 +1,7 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.answer;
+import com.nighthawk.spring_portfolio.mvc.stocks.User;
+import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
+
 
 import java.io.IOException;
 import java.util.List;
@@ -22,6 +25,7 @@ import com.nighthawk.spring_portfolio.mvc.rpg.question.Question;
 import com.nighthawk.spring_portfolio.mvc.rpg.question.QuestionJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.stocks.User;
 import com.nighthawk.spring_portfolio.mvc.stocks.UserJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.person.PersonUserMappingJpaRepository;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
@@ -40,17 +44,10 @@ public class AnswerApiController {
 
     @Autowired
     private AnswerJpaRepository answerJpaRepository;
-
-    @Autowired
-    private QuestionJpaRepository questionJpaRepository;
-
     @Autowired
     private UserJpaRepository userJpaRepository;
-    
-
-
-
-
+    @Autowired
+    private QuestionJpaRepository questionJpaRepository;
 
     @Getter 
     public static class AnswerDto {
@@ -172,19 +169,17 @@ public class AnswerApiController {
         return 0L;
     }
 
-/*
+
     @GetMapping("/leaderboard")
     public List<LeaderboardDto> getLeaderboard() {
     List<LeaderboardDto> leaderboardEntries = answerJpaRepository.findTop10PlayersByTotalScore();
 
     for (LeaderboardDto entry : leaderboardEntries) {
-        Optional<Player> player = playerJpaRepository.findById(entry.getId());
-        String playerName = player.isPresent() ? player.get().getName() : "Unknown";
+        Optional<User> user = userJpaRepository.findById(entry.getId());
+        String playerName = user.isPresent() ? user.get().getUsername() : "Unknown";
         entry.setPlayerName(playerName);
     }
 
     return leaderboardEntries;
     }  
-}
-*/
 }
