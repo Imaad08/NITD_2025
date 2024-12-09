@@ -1,17 +1,27 @@
 package com.nighthawk.spring_portfolio.mvc.person;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import lombok.Getter;
-
-import java.util.*;
-import java.text.SimpleDateFormat;
 
 /**
  * This class provides RESTful API endpoints for managing Person entities.
@@ -110,6 +120,7 @@ public class PersonApiController {
         private String password;
         private String name;
         private String dob;
+        private double balance; 
     }
 
     /**
@@ -127,7 +138,7 @@ public class PersonApiController {
             return new ResponseEntity<>(personDto.getDob() + " error; try MM-dd-yyyy", HttpStatus.BAD_REQUEST);
         }
         // A person object WITHOUT ID will create a new record in the database
-        Person person = new Person(personDto.getEmail(), personDto.getPassword(), personDto.getName(), dob, personDetailsService.findRole("USER"));
+        Person person = new Person(personDto.getEmail(), personDto.getPassword(), personDto.getName(), dob, personDto.getBalance(), personDetailsService.findRole("USER"));
         personDetailsService.save(person);
         return new ResponseEntity<>(personDto.getEmail() + " is created successfully", HttpStatus.CREATED);
     }

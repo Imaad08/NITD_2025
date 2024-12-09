@@ -12,12 +12,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Convert;
 import static jakarta.persistence.FetchType.EAGER;
 import jakarta.validation.constraints.Email;
@@ -28,6 +32,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import lombok.AllArgsConstructor;
@@ -58,6 +63,7 @@ public class Person {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+    
 
     /** Many to Many relationship with PersonRole
      * --- @ManyToMany annotation is used to specify a many-to-many relationship between the entities.
@@ -67,7 +73,15 @@ public class Person {
      * --- PersonRole is a POJO, Plain Old Java Object. 
      */
     @ManyToMany(fetch = EAGER)
+    @JoinTable(
+        name = "person_person_sections",  // unique name to avoid conflicts
+        joinColumns = @JoinColumn(name = "person_id"),
+        inverseJoinColumns = @JoinColumn(name = "section_id")
+    )
     private Collection<PersonRole> roles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "person", cascade=CascadeType.ALL)
+    private List<userStocksTable> user_stocks;
 
     /** email, password, roles are key attributes to login and authentication
      * --- @NotEmpty annotation is used to validate that the annotated field is not null or empty, meaning it has to have a value.
@@ -96,7 +110,13 @@ public class Person {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date dob;
 
-    /** stats is used to store JSON for daily stat$
+    /** balance is used to store the user's balance
+     * --- @Column annotation is used to specify the mapped column for a persistent property or field.
+     */
+    @Column
+    private double balance;
+
+    /** stats is used to store JSON for daily stats
      * --- @JdbcTypeCode annotation is used to specify the JDBC type code for a column, in this case json.
      * --- @Column annotation is used to specify the mapped column for a persistent property or field, in this case columnDefinition is specified as jsonb.
      * * * Example of JSON data:
@@ -114,11 +134,12 @@ public class Person {
 
     /** Custom constructor for Person when building a new Person object from an API call
      */
-    public Person(String email, String password, String name, Date dob, PersonRole role) {
+    public Person(String email, String password, String name, Date dob, double balance, PersonRole role) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.dob = dob;
+        this.balance = balance;
         this.roles.add(role);
     }
 
@@ -136,20 +157,22 @@ public class Person {
      * @param email
      * @param password
      * @param dob
+     * @param balance
      * @return Person
      *  */ 
-    public static Person createPerson(String name, String email, String password, String dob) {
+    public static Person createPerson(String name, String email, String password, String dob, double balance) {
         // By default, Spring Security expects roles to have a "ROLE_" prefix.
-        return createPerson(name, email, password, dob, Arrays.asList("ROLE_USER"));
+        return createPerson(name, email, password, dob, balance, Arrays.asList("ROLE_USER"));
     }
     /** 2nd telescoping method to create a Person object with parameterized roles
      * @param roles 
      */
-    public static Person createPerson(String name, String email, String password, String dob, List<String> roleNames) {
+    public static Person createPerson(String name, String email, String password, String dob, double balance, List<String> roleNames) {
         Person person = new Person();
         person.setName(name);
         person.setEmail(email);
         person.setPassword(password);
+        person.setBalance(balance);
         try {
             Date date = new SimpleDateFormat("MM-dd-yyyy").parse(dob);
             person.setDob(date);
@@ -171,15 +194,25 @@ public class Person {
      * @return Person[], an array of Person objects
      */
     public static Person[] init() {
-        ArrayList<Person> persons = new ArrayList<>();
-        persons.add(createPerson("Thomas Edison", "toby@gmail.com", "123toby", "01-01-1840", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER")));
-        persons.add(createPerson("Alexander Graham Bell", "lexb@gmail.com", "123lex", "01-01-1847"));
-        persons.add(createPerson("Nikola Tesla", "niko@gmail.com", "123niko", "01-01-1850"));
-        persons.add(createPerson("Madam Currie", "madam@gmail.com", "123madam", "01-01-1860"));
-        persons.add(createPerson("Grace Hopper", "hop@gmail.com", "123hop", "12-09-1906"));
-        persons.add(createPerson("John Mortensen", "jm1021@gmail.com", "123Qwerty!", "10-21-1959", Arrays.asList("ROLE_ADMIN")));
-        return persons.toArray(new Person[0]);
+    ArrayList<Person> persons = new ArrayList<>();
+    persons.add(createPerson("Thomas Edison", "toby@gmail.com", "123toby", "01-01-1840", 1000.0, Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER")));
+    persons.add(createPerson("Alexander Graham Bell", "lexb@gmail.com", "123lex", "01-01-1847", 1500.0));
+    persons.add(createPerson("Nikola Tesla", "niko@gmail.com", "123niko", "01-01-1850", 2000.0));
+    persons.add(createPerson("Madam Currie", "madam@gmail.com", "123madam", "01-01-1860", 2500.0));
+    persons.add(createPerson("Grace Hopper", "hop@gmail.com", "123hop", "12-09-1906", 3000.0));
+    persons.add(createPerson("John Mortensen", "jm1021@gmail.com", "123Qwerty!", "10-21-1959", 3500.0, Arrays.asList("ROLE_ADMIN")));
+
+    // Initialize stocks for each person
+    for (Person person : persons) {
+        List<userStocksTable> stocks = new ArrayList<>();
+        stocks.add(new userStocksTable("AAPL", "BTC", person));
+        stocks.add(new userStocksTable("TSLA", "ETH", person));
+        person.setUser_stocks(stocks);
     }
+
+    return persons.toArray(new Person[0]);
+}
+
 
     /** Static method to print Person objects from an array
      * @param args, not used
