@@ -22,16 +22,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Convert;
 import static jakarta.persistence.FetchType.EAGER;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
-
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
@@ -80,8 +81,9 @@ public class Person {
     )
     private Collection<PersonRole> roles = new ArrayList<>();
 
-    @OneToMany(mappedBy = "person", cascade=CascadeType.ALL)
-    private List<userStocksTable> user_stocks;
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
+    @JsonIgnore
+    private userStocksTable user_stocks;
 
     /** email, password, roles are key attributes to login and authentication
      * --- @NotEmpty annotation is used to validate that the annotated field is not null or empty, meaning it has to have a value.
@@ -204,27 +206,19 @@ public class Person {
 
     // Initialize stocks for each person
     for (Person person : persons) {
-        List<userStocksTable> stocks = new ArrayList<>();
-        stocks.add(new userStocksTable("AAPL", "BTC", person));
-        stocks.add(new userStocksTable("TSLA", "ETH", person));
-        person.setUser_stocks(stocks);
+        userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", person);
+        person.setUser_stocks(stock);
     }
 
     return persons.toArray(new Person[0]);
 }
 
+public static void main(String[] args) {
+    Person[] persons = init();
 
-    /** Static method to print Person objects from an array
-     * @param args, not used
-     */
-    public static void main(String[] args) {
-        // obtain Person from initializer
-        Person persons[] = init();
-
-        // iterate using "enhanced for loop"
-        for( Person person : persons) {
-            System.out.println(person);  // print object
-        }
+    for (Person person : persons) {
+        System.out.println(person);
     }
+}
 
 }

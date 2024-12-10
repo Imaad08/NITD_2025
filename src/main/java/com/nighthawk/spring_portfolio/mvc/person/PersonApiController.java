@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
+import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 import lombok.Getter;
 
 /**
@@ -46,6 +48,10 @@ public class PersonApiController {
      */
     @Autowired
     private PersonDetailsService personDetailsService;
+
+    @Autowired
+    private UserStocksRepository userStocksRepository;
+
 
     /**
      * Retrieves a Person entity by current user of JWT token.
@@ -128,20 +134,39 @@ public class PersonApiController {
      * @param personDto
      * @return A ResponseEntity containing a success message if the Person entity is created, or a BAD_REQUEST status if not created.
      */
-    @PostMapping("/person")
-    public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
-        // Validate dob input
-        Date dob;
-        try {
-            dob = new SimpleDateFormat("MM-dd-yyyy").parse(personDto.getDob());
-        } catch (Exception e) {
-            return new ResponseEntity<>(personDto.getDob() + " error; try MM-dd-yyyy", HttpStatus.BAD_REQUEST);
-        }
-        // A person object WITHOUT ID will create a new record in the database
-        Person person = new Person(personDto.getEmail(), personDto.getPassword(), personDto.getName(), dob, personDto.getBalance(), personDetailsService.findRole("USER"));
-        personDetailsService.save(person);
-        return new ResponseEntity<>(personDto.getEmail() + " is created successfully", HttpStatus.CREATED);
+   @PostMapping("/person")
+public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
+    // Validate dob input
+    Date dob;
+    try {
+        dob = new SimpleDateFormat("MM-dd-yyyy").parse(personDto.getDob());
+    } catch (Exception e) {
+        return new ResponseEntity<>(personDto.getDob() + " error; try MM-dd-yyyy", HttpStatus.BAD_REQUEST);
     }
+    
+    // Create a new Person object
+    Person person = new Person(
+        personDto.getEmail(), 
+        personDto.getPassword(), 
+        personDto.getName(), 
+        dob, 
+        100000, // Default balance
+        personDetailsService.findRole("USER")
+    );
+    
+    // Save the Person entity
+    personDetailsService.save(person);
+    
+    // Create a new userStocksTable entry with default stocks and crypto
+    userStocksTable userStocks = new userStocksTable("AAPL", "BTC", person);
+    
+    // Save the userStocksTable entity
+    userStocksRepository.save(userStocks); // Ensure you autowire this repository
+    
+    // Return a success response
+    return new ResponseEntity<>(personDto.getEmail() + " is created successfully", HttpStatus.CREATED);
+}
+
 
     /**
      * Search for a Person entity by name or email.
