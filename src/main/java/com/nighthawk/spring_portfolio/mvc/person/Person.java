@@ -214,6 +214,7 @@ public class Person {
     return persons.toArray(new Person[0]);
 }
 
+// main method to initizlize and print Person objects
 public static void main(String[] args) {
     Person[] persons = init();
 

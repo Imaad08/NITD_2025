@@ -23,42 +23,46 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Getter
-@Setter
+@Data // Lombok annotation to generate boilerplate code (getters, setters, toString, etc.)
+@NoArgsConstructor // Lombok annotation to generate a no-argument constructor
+@AllArgsConstructor // Lombok annotation to generate an all-arguments constructor
+@Entity // Marks this class as a JPA entity (mapped to a database table)
+@Getter // Lombok annotation to generate getters
+@Setter // Lombok annotation to generate setters
 public class userStocksTable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id; // Primary key
+    private Long id; // Primary key for the userStocksTable entity
 
     @Column
-    private String person_name;
+    private String person_name; // Name of the associated person
 
     @OneToOne
-    @JoinColumn(name = "person_id", referencedColumnName = "id") // Maps to the Person table's primary key
+    @JoinColumn(name = "person_id", referencedColumnName = "id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
-    private Person person; // One-to-One relationship with Person entity
+    private Person person; // One-to-One relationship with the Person entity
 
-    private String stonks; // Stock ticker
-    private String crypto; // Cryptocurrency ticker
-    private String balance; // Cryptocurrency ticker
+    @Column
+    private String stonks; // Stock ticker symbols (e.g., AAPL, TSLA)
 
-    // Constructor for initializing user stocks
+    @Column
+    private String crypto; // Cryptocurrency ticker symbols (e.g., BTC, ETH)
+
+    @Column
+    private String balance; // Balance for the associated person
+
+    // Constructor for initializing a userStocksTable object
     public userStocksTable(String stonks, String crypto, String balance, Person person) {
         this.person_name = person.getName();
         this.stonks = stonks;
         this.crypto = crypto;
         this.balance = balance;
         this.person = person;
-        
     }
 
-    // Initialization method to create userStocksTable objects for a list of persons
+    // Method to initialize an array of userStocksTable objects for a list of Person entities
     public static userStocksTable[] init(Person[] persons) {
         ArrayList<userStocksTable> stocks = new ArrayList<>();
         for (Person person : persons) {
@@ -66,10 +70,11 @@ public class userStocksTable {
         }
         return stocks.toArray(new userStocksTable[0]);
     }
+
     @PreUpdate
     public void updatePersonName() {
         if (person != null) {
-            this.person_name = person.getName(); // Update person_name with the latest name
+            this.person_name = person.getName();
         }
     }
 }
