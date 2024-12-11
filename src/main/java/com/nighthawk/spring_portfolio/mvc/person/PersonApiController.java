@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
+
 import lombok.Getter;
 
 /**
@@ -158,7 +159,7 @@ public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
     personDetailsService.save(person);
     
     // Create a new userStocksTable entry with default stocks and crypto
-    userStocksTable userStocks = new userStocksTable("AAPL", "BTC", person);
+    userStocksTable userStocks = new userStocksTable(null, null , person);
     
     // Save the userStocksTable entity
     userStocksRepository.save(userStocks); // Ensure you autowire this repository
