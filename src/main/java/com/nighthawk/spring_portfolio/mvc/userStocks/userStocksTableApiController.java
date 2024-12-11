@@ -45,6 +45,17 @@ public class userStocksTableApiController {
         }
     }
 
+    @PostMapping("/removeStock")
+    @ResponseBody
+    public String removeStock(@RequestBody StockRequest request) {
+        try {
+            userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
+            return "Stock removed successfully!";
+        } catch (Exception e) {
+            return "An error occurred: " + e.getMessage();
+        }
+    }
+
 
 }
 @Data
@@ -215,6 +226,50 @@ class UserStocksTableService implements UserDetailsService {
         }
         
         user.setStonks(updatedStonks.toString());
+        userRepository.save(user);
+    }
+
+    public void removeStock(String username, int quantity, String stockSymbol) {
+        userStocksTable user = userRepository.findByPersonName(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        double stockPrice = getCurrentStockPrice(stockSymbol);
+        double totalValue = stockPrice * quantity;
+
+        String existingStonks = user.getStonks();
+        StringBuilder updatedStonks = new StringBuilder();
+
+        if (existingStonks != null && !existingStonks.isEmpty()) {
+            String[] stocks = existingStonks.split(",");
+            
+            for (String stock : stocks) {
+                String[] parts = stock.split("-");
+                int currentQuantity = Integer.parseInt(parts[0]);
+                String currentStockSymbol = parts[1];
+
+                if (currentStockSymbol.equals(stockSymbol)) {
+                    if (currentQuantity < quantity) {
+                        throw new RuntimeException("not enough stock quantity to remove");
+                    }
+                    currentQuantity -= quantity;
+                }
+
+                if (currentQuantity > 0) {
+                    updatedStonks.append(currentQuantity).append("-").append(currentStockSymbol).append(",");
+                }
+            }
+        }
+
+        if (updatedStonks.length() > 0) {
+            updatedStonks.setLength(updatedStonks.length() - 1);
+        }
+
+        user.setStonks(updatedStonks.toString());
+        //user.setBalance(user.getBalance() + totalValue); // Add the balance for sale
+
+        double userBalance = Double.parseDouble(user.getBalance());
+        String str = String.valueOf(userBalance + totalValue);
+        user.setBalance(str); // Deduct the balance for purchase
         userRepository.save(user);
     }
 
