@@ -13,9 +13,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -58,6 +60,32 @@ public class userStocksTableApiController {
         }
     }
 
+    @GetMapping("/getStocks")
+    @ResponseBody
+    public List<UserStockInfo> getStocks(@RequestParam String username) {
+        return userService.getUserStocks(username);
+    }
+    
+    @GetMapping("/portfolioValue")
+    @ResponseBody
+
+    public ResponseEntity<Double> getPortfolioValue(@RequestParam String username) {
+
+        try {
+
+            double portfolioValue = userService.calculatePortfolioValue(username);
+
+            return ResponseEntity.ok(portfolioValue);
+
+        } catch (Exception e) {
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+
+                                 .body(null);
+
+        }
+
+    }
 
 }
 @Data
