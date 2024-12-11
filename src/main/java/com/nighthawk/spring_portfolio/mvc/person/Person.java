@@ -21,7 +21,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Convert;
 import static jakarta.persistence.FetchType.EAGER;
@@ -206,7 +205,7 @@ public class Person {
 
     // Initialize stocks for each person
     for (Person person : persons) {
-        userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", person);
+        userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", "1000", person);
         person.setUser_stocks(stock);
     }
 

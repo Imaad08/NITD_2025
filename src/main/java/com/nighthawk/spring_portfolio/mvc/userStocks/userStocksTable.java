@@ -45,20 +45,23 @@ public class userStocksTable {
 
     private String stonks; // Stock ticker
     private String crypto; // Cryptocurrency ticker
+    private String balance; // Cryptocurrency ticker
 
     // Constructor for initializing user stocks
-    public userStocksTable(String stonks, String crypto, Person person) {
+    public userStocksTable(String stonks, String crypto, String balance, Person person) {
         this.person_name = person.getName();
         this.stonks = stonks;
         this.crypto = crypto;
+        this.balance = balance;
         this.person = person;
+        
     }
 
     // Initialization method to create userStocksTable objects for a list of persons
     public static userStocksTable[] init(Person[] persons) {
         ArrayList<userStocksTable> stocks = new ArrayList<>();
         for (Person person : persons) {
-            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", person));
+            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", "1000", person));
         }
         return stocks.toArray(new userStocksTable[0]);
     }
