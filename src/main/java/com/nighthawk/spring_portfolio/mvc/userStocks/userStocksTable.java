@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
+import static com.nighthawk.spring_portfolio.mvc.person.Person.startingBalance;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,7 +62,7 @@ public class userStocksTable {
     public static userStocksTable[] init(Person[] persons) {
         ArrayList<userStocksTable> stocks = new ArrayList<>();
         for (Person person : persons) {
-            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", "1000", person));
+            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person));
         }
         return stocks.toArray(new userStocksTable[0]);
     }

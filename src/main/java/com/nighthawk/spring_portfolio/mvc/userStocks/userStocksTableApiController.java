@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.nighthawk.spring_portfolio.hacks.classDataStruct.Person;
+import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -87,8 +90,8 @@ class UserStocksTableService implements UserDetailsService {
     @Autowired
     private UserStocksRepository userRepository;
     
-    //@Autowired
-    //private QuestionJpaRepository questionJpaRepository;
+    @Autowired
+    private PersonJpaRepository personJpaRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -227,6 +230,10 @@ class UserStocksTableService implements UserDetailsService {
         
         user.setStonks(updatedStonks.toString());
         userRepository.save(user);
+        // Update the balance in the person table
+        com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
+        person.setBalance(user.getBalance());
+        personJpaRepository.save(person);
     }
 
     public void removeStock(String username, int quantity, String stockSymbol) {
@@ -271,6 +278,10 @@ class UserStocksTableService implements UserDetailsService {
         String str = String.valueOf(userBalance + totalValue);
         user.setBalance(str); // Deduct the balance for purchase
         userRepository.save(user);
+
+        com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
+        person.setBalance(user.getBalance());
+        personJpaRepository.save(person);
     }
 
     public List<UserStockInfo> getUserStocks(String username) {

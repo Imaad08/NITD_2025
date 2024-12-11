@@ -195,19 +195,19 @@ public class Person {
      * @return Person[], an array of Person objects
      */
 
-    static String balance2 = "20000000";
+    public static String startingBalance = "100000";
         public static Person[] init() {
         ArrayList<Person> persons = new ArrayList<>();
-        persons.add(createPerson("Thomas Edison", "toby@gmail.com", "123toby", "01-01-1840", balance2, Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER")));
-    persons.add(createPerson("Alexander Graham Bell", "lexb@gmail.com", "123lex", "01-01-1847", balance2));
-    persons.add(createPerson("Nikola Tesla", "niko@gmail.com", "123niko", "01-01-1850", balance2));
-    persons.add(createPerson("Madam Currie", "madam@gmail.com", "123madam", "01-01-1860", balance2));
-    persons.add(createPerson("Grace Hopper", "hop@gmail.com", "123hop", "12-09-1906", balance2));
-    persons.add(createPerson("John Mortensen", "jm1021@gmail.com", "123Qwerty!", "10-21-1959", balance2, Arrays.asList("ROLE_ADMIN")));
+        persons.add(createPerson("Thomas Edison", "toby@gmail.com", "123toby", "01-01-1840", startingBalance, Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER")));
+    persons.add(createPerson("Alexander Graham Bell", "lexb@gmail.com", "123lex", "01-01-1847", startingBalance));
+    persons.add(createPerson("Nikola Tesla", "niko@gmail.com", "123niko", "01-01-1850", startingBalance));
+    persons.add(createPerson("Madam Currie", "madam@gmail.com", "123madam", "01-01-1860", startingBalance));
+    persons.add(createPerson("Grace Hopper", "hop@gmail.com", "123hop", "12-09-1906", startingBalance));
+    persons.add(createPerson("John Mortensen", "jm1021@gmail.com", "123Qwerty!", "10-21-1959", startingBalance, Arrays.asList("ROLE_ADMIN")));
 
     // Initialize stocks for each person
     for (Person person : persons) {
-        userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", balance2, person);
+        userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person);
         person.setUser_stocks(stock);
     }
 

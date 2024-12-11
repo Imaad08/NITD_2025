@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.nighthawk.spring_portfolio.mvc.person.Person.startingBalance;
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 
@@ -151,7 +152,7 @@ public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
         personDto.getPassword(), 
         personDto.getName(), 
         dob, 
-        "100000", // Default balance
+        startingBalance, // Default balance
         personDetailsService.findRole("USER")
     );
     
@@ -159,7 +160,7 @@ public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
     personDetailsService.save(person);
     
     // Create a new userStocksTable entry with default stocks and crypto
-    userStocksTable userStocks = new userStocksTable(null, null, "10000", person);
+    userStocksTable userStocks = new userStocksTable(null, null, startingBalance, person);
     
     // Save the userStocksTable entity
     userStocksRepository.save(userStocks); // Ensure you autowire this repository
