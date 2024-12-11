@@ -151,7 +151,7 @@ public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
         personDto.getPassword(), 
         personDto.getName(), 
         dob, 
-        100000, // Default balance
+        "100000", // Default balance
         personDetailsService.findRole("USER")
     );
     
@@ -159,7 +159,7 @@ public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
     personDetailsService.save(person);
     
     // Create a new userStocksTable entry with default stocks and crypto
-    userStocksTable userStocks = new userStocksTable(null, null, null, person);
+    userStocksTable userStocks = new userStocksTable(null, null, "10000", person);
     
     // Save the userStocksTable entity
     userStocksRepository.save(userStocks); // Ensure you autowire this repository

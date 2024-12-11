@@ -115,7 +115,7 @@ public class Person {
      * --- @Column annotation is used to specify the mapped column for a persistent property or field.
      */
     @Column
-    private double balance;
+    private String balance;
 
     /** stats is used to store JSON for daily stats
      * --- @JdbcTypeCode annotation is used to specify the JDBC type code for a column, in this case json.
@@ -135,7 +135,7 @@ public class Person {
 
     /** Custom constructor for Person when building a new Person object from an API call
      */
-    public Person(String email, String password, String name, Date dob, double balance, PersonRole role) {
+    public Person(String email, String password, String name, Date dob, String balance, PersonRole role) {
         this.email = email;
         this.password = password;
         this.name = name;
@@ -161,14 +161,14 @@ public class Person {
      * @param balance
      * @return Person
      *  */ 
-    public static Person createPerson(String name, String email, String password, String dob, double balance) {
+    public static Person createPerson(String name, String email, String password, String dob, String balance) {
         // By default, Spring Security expects roles to have a "ROLE_" prefix.
         return createPerson(name, email, password, dob, balance, Arrays.asList("ROLE_USER"));
     }
     /** 2nd telescoping method to create a Person object with parameterized roles
      * @param roles 
      */
-    public static Person createPerson(String name, String email, String password, String dob, double balance, List<String> roleNames) {
+    public static Person createPerson(String name, String email, String password, String dob, String balance, List<String> roleNames) {
         Person person = new Person();
         person.setName(name);
         person.setEmail(email);
@@ -194,18 +194,20 @@ public class Person {
     /** Static method to initialize an array list of Person objects 
      * @return Person[], an array of Person objects
      */
-    public static Person[] init() {
-    ArrayList<Person> persons = new ArrayList<>();
-    persons.add(createPerson("Thomas Edison", "toby@gmail.com", "123toby", "01-01-1840", 1000.0, Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER")));
-    persons.add(createPerson("Alexander Graham Bell", "lexb@gmail.com", "123lex", "01-01-1847", 1500.0));
-    persons.add(createPerson("Nikola Tesla", "niko@gmail.com", "123niko", "01-01-1850", 2000.0));
-    persons.add(createPerson("Madam Currie", "madam@gmail.com", "123madam", "01-01-1860", 2500.0));
-    persons.add(createPerson("Grace Hopper", "hop@gmail.com", "123hop", "12-09-1906", 3000.0));
-    persons.add(createPerson("John Mortensen", "jm1021@gmail.com", "123Qwerty!", "10-21-1959", 3500.0, Arrays.asList("ROLE_ADMIN")));
+
+    static String balance2 = "20000000";
+        public static Person[] init() {
+        ArrayList<Person> persons = new ArrayList<>();
+        persons.add(createPerson("Thomas Edison", "toby@gmail.com", "123toby", "01-01-1840", balance2, Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER")));
+    persons.add(createPerson("Alexander Graham Bell", "lexb@gmail.com", "123lex", "01-01-1847", balance2));
+    persons.add(createPerson("Nikola Tesla", "niko@gmail.com", "123niko", "01-01-1850", balance2));
+    persons.add(createPerson("Madam Currie", "madam@gmail.com", "123madam", "01-01-1860", balance2));
+    persons.add(createPerson("Grace Hopper", "hop@gmail.com", "123hop", "12-09-1906", balance2));
+    persons.add(createPerson("John Mortensen", "jm1021@gmail.com", "123Qwerty!", "10-21-1959", balance2, Arrays.asList("ROLE_ADMIN")));
 
     // Initialize stocks for each person
     for (Person person : persons) {
-        userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", "1000", person);
+        userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", balance2, person);
         person.setUser_stocks(stock);
     }
 
