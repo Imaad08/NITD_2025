@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.nighthawk.spring_portfolio.hacks.classDataStruct.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 
 import lombok.AllArgsConstructor;
@@ -239,13 +238,14 @@ class UserStocksTableService implements UserDetailsService {
     public void removeStock(String username, int quantity, String stockSymbol) {
         userStocksTable user = userRepository.findByPersonName(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
+    
         double stockPrice = getCurrentStockPrice(stockSymbol);
         double totalValue = stockPrice * quantity;
-
+    
         String existingStonks = user.getStonks();
         StringBuilder updatedStonks = new StringBuilder();
-
+        boolean stockExists = false;
+    
         if (existingStonks != null && !existingStonks.isEmpty()) {
             String[] stocks = existingStonks.split(",");
             
@@ -253,36 +253,51 @@ class UserStocksTableService implements UserDetailsService {
                 String[] parts = stock.split("-");
                 int currentQuantity = Integer.parseInt(parts[0]);
                 String currentStockSymbol = parts[1];
-
+    
                 if (currentStockSymbol.equals(stockSymbol)) {
+                    stockExists = true;
+    
                     if (currentQuantity < quantity) {
-                        throw new RuntimeException("not enough stock quantity to remove");
+                        throw new RuntimeException("Not enough stock quantity to remove");
                     }
+    
+                    // Reduce the quantity of the stock
                     currentQuantity -= quantity;
-                }
-
-                if (currentQuantity > 0) {
-                    updatedStonks.append(currentQuantity).append("-").append(currentStockSymbol).append(",");
+    
+                    // Only keep stocks that are still in the portfolio (quantity > 0)
+                    if (currentQuantity > 0) {
+                        updatedStonks.append(currentQuantity).append("-").append(currentStockSymbol).append(",");
+                    }
+                } else {
+                    updatedStonks.append(parts[0]).append("-").append(parts[1]).append(",");
                 }
             }
         }
-
+    
+        if (!stockExists) {
+            throw new RuntimeException("Stock not found in user's portfolio");
+        }
+    
+        // Remove the trailing comma
         if (updatedStonks.length() > 0) {
             updatedStonks.setLength(updatedStonks.length() - 1);
         }
-
+    
+        // Update user's stock holdings
         user.setStonks(updatedStonks.toString());
-        //user.setBalance(user.getBalance() + totalValue); // Add the balance for sale
-
+    
+        // Update the user's balance
         double userBalance = Double.parseDouble(user.getBalance());
-        String str = String.valueOf(userBalance + totalValue);
-        user.setBalance(str); // Deduct the balance for purchase
+        String newBalance = String.valueOf(userBalance + totalValue);
+        user.setBalance(newBalance);
+    
         userRepository.save(user);
-
+    
+        // Also update the person's balance in the person table
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
         person.setBalance(user.getBalance());
         personJpaRepository.save(person);
-    }
+    }    
 
     public List<UserStockInfo> getUserStocks(String username) {
         userStocksTable user = userRepository.findByPersonName(username)
